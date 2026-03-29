@@ -167,6 +167,7 @@ def insights():
 
     conn = get_db()
 
+    # Filtered transactions
     if category:
         transactions = conn.execute(
             "SELECT * FROM transactions WHERE user_id = ? AND category = ?",
@@ -178,9 +179,15 @@ def insights():
             (session["user_id"],)
         ).fetchall()
 
+    # ALL transactions (for % comparison)
+    all_transactions = conn.execute(
+        "SELECT * FROM transactions WHERE user_id = ?",
+        (session["user_id"],)
+    ).fetchall()
+
     conn.close()
 
-    return jsonify(generate_insights(transactions))
+    return jsonify(generate_insights(transactions, all_transactions))
 
 # ------------------------
 # Add / Reset / Auth

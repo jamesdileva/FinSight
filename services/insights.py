@@ -15,7 +15,9 @@ def generate_insights(transactions, all_transactions=None):
 
     if all_transactions:
         total_all = sum(t["amount"] for t in all_transactions)
-        if total_all > 0:
+
+        # Only show if actually filtered (not 100%)
+        if total_all > 0 and total != total_all:
             percent_total = (total / total_all) * 100
             insights.append(f"This is {percent_total:.1f}% of total spending")
 
@@ -26,22 +28,29 @@ def generate_insights(transactions, all_transactions=None):
     for t in transactions:
         categories[t["category"]] += t["amount"]
 
-    total_cat = sum(categories.values())
-
-    top = max(categories, key=categories.get)
-    percent = (categories[top] / total_cat) * 100
-    insights.append(f"Top category: {top} ({percent:.1f}%)")
+    if not categories:
+        return ["No data for this category"]
 
     single_category = len(categories) == 1
-    if single_category:
-        insights.append("Viewing a single category")
+
+    # ONLY show top category if multiple categories
+    if not single_category:
+        top = max(categories, key=categories.get)
+
+        if all_transactions:
+            total_all = sum(t["amount"] for t in all_transactions)
+            percent = (categories[top] / total_all) * 100
+            insights.append(f"Top category: {top} ({percent:.1f}% of total)")
+        else:
+            total_cat = sum(categories.values())
+            percent = (categories[top] / total_cat) * 100
+            insights.append(f"Top category: {top} ({percent:.1f}%)")
 
     # ------------------------
     # Monthly
     # ------------------------
     months = monthly_spending(transactions)
-
-    insights.append(spending_trend(months))
+    growth = monthly_growth_rate(months)
 
     # ------------------------
     # Growth
@@ -49,10 +58,11 @@ def generate_insights(transactions, all_transactions=None):
     growth = monthly_growth_rate(months)
     if growth is not None:
         if growth > 0:
-            insights.append(f"Spending increased by {growth}%")
+            insights.append(f"Spending increased by {growth:.2f}%")
         else:
-            insights.append(f"Spending decreased by {abs(growth)}%")
-
+            insights.append(f"Spending decreased by {abs(growth):.2f}%")
+    else:
+        insights.append(spending_trend(months))
     # ------------------------
     # Spike
     # ------------------------
@@ -64,18 +74,18 @@ def generate_insights(transactions, all_transactions=None):
     # Category comparison
     # ------------------------
     if not single_category:
-        largest = max(categories, key=categories.get)
         smallest = min(categories, key=categories.get)
-
-        insights.append(f"Highest spending category: {largest}")
         insights.append(f"Lowest spending category: {smallest}")
 
     # ------------------------
-    # Filter-specific insight
+    # Single category extras
     # ------------------------
     if single_category and len(months) > 0:
         avg = total / len(months)
         insights.append(f"Average monthly spending: ${avg:.2f}")
+
+        highest_month = max(months, key=months.get)
+        insights.append(f"Highest spending month: {highest_month}")
 
     return insights
 
@@ -93,16 +103,20 @@ def monthly_spending(transactions):
 
 def spending_trend(months):
     keys = sorted(months.keys())
+
     if len(keys) < 2:
         return "Not enough data for trends"
 
-    if months[keys[-1]] > months[keys[0]]:
+    avg = sum(months.values()) / len(months)
+
+    if months[keys[-1]] > avg:
         return "Spending is increasing over time"
     return "Spending is decreasing over time"
 
 
 def monthly_growth_rate(months):
     keys = sorted(months.keys())
+
     if len(keys) < 2:
         return None
 
@@ -119,7 +133,7 @@ def detect_spike(months):
     keys = sorted(months.keys())
 
     for i in range(1, len(keys)):
-        prev = months[keys[i-1]]
+        prev = months[keys[i - 1]]
         curr = months[keys[i]]
 
         if prev == 0:
