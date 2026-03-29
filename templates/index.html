@@ -28,12 +28,74 @@
 
     input { background: #334155; color: white; }
     button { background: #3b82f6; color: white; cursor: pointer; }
+
+    /* ✅ HEADER */
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .top-bar {
+      display: flex;
+      gap: 10px;
+    }
+
+    .top-bar form {
+      margin: 0;
+    }
+
+    /* Default buttons (blue) */
+    button {
+      background: #f63b79;
+      color: white;
+      cursor: pointer;
+    }
+
+    /* Logout = RED */
+    .logout-btn {
+      background: #ef4444;
+    }
+
+  .logout-btn:hover {
+    background: #dc2626;
+  }
+
+  /* Reset = BLUE (link styled as button) */
+  .reset-btn {
+    background: #3b57f6;
+    color: white;
+    padding: 8px 10px;
+    border-radius: 6px;
+    text-decoration: none;
+  }
+
+  .reset-btn:hover {
+    background: #2563eb;
+  }
   </style>
 </head>
 
 <body>
 
-<h1>FinSight</h1>
+<!-- ✅ HEADER -->
+<div class="header">
+  <h1>FinSight</h1>
+
+  <div class="top-bar">
+  <form action="/logout">
+    <button type="submit" class="logout-btn">Logout</button>
+  </form>
+
+<form action="/reset" method="get" onsubmit="return confirmReset()">
+  <button type="submit" class="reset-btn">Reset</button>
+</form>
+</form>
+</div>
+
+
+  </div>
+</div>
 
 <!-- FILTER -->
 <select id="categoryFilter">
@@ -52,6 +114,28 @@
 
   <input id="stockInput" placeholder="Enter ticker (AAPL)">
   <button onclick="loadStock()">Track</button>
+  <div>
+    <h3>Quick Picks
+          <!-- buttons -->
+  <button onclick="quickStock('AAPL')">Apple</button>
+  <button onclick="quickStock('TSLA')">Tesla</button>
+  <button onclick="quickStock('GOOGL')">Google</button>
+  <button onclick="quickStock('AMZN')">Amazon</button>
+  </h3><h3>Browse Stocks
+<!-- dropdown -->
+  <select id="stockDropdown" onchange="selectStock()">
+  <option value="">Select a stock</option>
+  <option value="NVDA">Nvidia</option>
+  <option value="META">Meta (Facebook)</option>
+  <option value="NFLX">Netflix</option>
+  <option value="AMD">AMD</option>
+  <option value="INTC">Intel</option>
+  <option value="DIS">Disney</option>
+  <option value="UBER">Uber</option>
+  <option value="PYPL">PayPal</option>
+    </h3>
+</select>
+</div>
 
   <div id="stockContainer"></div>
 </div>
@@ -96,16 +180,21 @@
   {% endfor %}
 </ul>
 
-<!-- ACTIONS -->
-<form action="/logout">
-  <button>Logout</button>
-</form>
-
-<a href="/reset">Reset Data</a>
-
 <script>
 let pieChart;
 let lineChart;
+
+function selectStock() {
+    const dropdown = document.getElementById("stockDropdown");
+    const ticker = dropdown.value;
+
+    if (!ticker) return;
+
+    document.getElementById("stockInput").value = ticker;
+    loadStock();
+
+    dropdown.value = ""; // reset back to placeholder
+}
 
 function loadCharts() {
     const category = document.getElementById("categoryFilter").value;
@@ -157,9 +246,14 @@ function loadCharts() {
         });
 }
 
+function quickStock(ticker) {
+    document.getElementById("stockInput").value = ticker;
+    loadStock();
+}
+
 // STOCK TRACKER
 function loadStock() {
-    const ticker = document.getElementById("stockInput").value;
+    let ticker = document.getElementById("stockInput").value.toUpperCase();
     if (!ticker) return;
 
     document.getElementById("stockContainer").innerHTML = `
@@ -179,3 +273,9 @@ window.onload = loadCharts;
 
 </body>
 </html>
+<script>
+
+function confirmReset() {
+    return confirm("Are you sure you want to delete ALL your data? This cannot be undone.");
+}
+</script>
