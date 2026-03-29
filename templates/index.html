@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <title>FinSight</title>
+
+  <style>
+    body {
+      background: #0f172a;
+      color: #e2e8f0;
+      font-family: Arial;
+      padding: 20px;
+    }
+
+    .card {
+      background: #1e293b;
+      padding: 15px;
+      border-radius: 10px;
+      margin-bottom: 20px;
+    }
+
+    input, button, select {
+      padding: 8px;
+      margin: 5px;
+      border-radius: 6px;
+      border: none;
+    }
+
+    input { background: #334155; color: white; }
+    button { background: #3b82f6; color: white; cursor: pointer; }
+  </style>
+</head>
+
+<body>
+
+<h1>FinSight</h1>
+
+<!-- FILTER -->
+<select id="categoryFilter">
+  <option value="">All</option>
+  <option value="Food">Food</option>
+  <option value="Rent">Rent</option>
+  <option value="Groceries">Groceries</option>
+  <option value="Transport">Transport</option>
+  <option value="Shopping">Shopping</option>
+  <option value="Entertainment">Entertainment</option>
+</select>
+
+<!-- STOCK TRACKER -->
+<div class="card">
+  <h2>Stock Tracker</h2>
+
+  <input id="stockInput" placeholder="Enter ticker (AAPL)">
+  <button onclick="loadStock()">Track</button>
+
+  <div id="stockContainer"></div>
+</div>
+
+<!-- ADD -->
+<div class="card">
+<h2>Add Transaction</h2>
+<form action="/add" method="POST">
+  <input name="amount" placeholder="Amount" required>
+  <input name="category" placeholder="Category" required>
+  <input name="date" type="date" required>
+  <input name="description" placeholder="Description">
+  <button>Add</button>
+</form>
+</div>
+
+<!-- UPLOAD -->
+<div class="card">
+<h2>Upload CSV</h2>
+<form action="/upload" method="POST" enctype="multipart/form-data">
+  <input type="file" name="file" required>
+  <button>Upload</button>
+</form>
+</div>
+
+<!-- INSIGHTS -->
+<h2>Insights</h2>
+<ul id="insightsList"></ul>
+
+<!-- CHARTS -->
+<h2>Monthly Trend</h2>
+<canvas id="monthlyChart"></canvas>
+
+<h2>Category Breakdown</h2>
+<canvas id="chart"></canvas>
+
+<!-- TRANSACTIONS -->
+<h2>Transactions</h2>
+<ul>
+  {% for t in transactions %}
+    <li>${{ t.amount }} - {{ t.category }} - {{ t.date }}</li>
+  {% endfor %}
+</ul>
+
+<!-- ACTIONS -->
+<form action="/logout">
+  <button>Logout</button>
+</form>
+
+<a href="/reset">Reset Data</a>
+
+<script>
+let pieChart;
+let lineChart;
+
+function loadCharts() {
+    const category = document.getElementById("categoryFilter").value;
+
+    // PIE
+    fetch(`/chart-data?category=${category}`)
+        .then(res => res.json())
+        .then(data => {
+            if (pieChart) pieChart.destroy();
+            pieChart = new Chart(document.getElementById("chart"), {
+                type: "pie",
+                data: {
+                    labels: Object.keys(data),
+                    datasets: [{ data: Object.values(data) }]
+                }
+            });
+        });
+
+    // LINE
+    fetch(`/monthly-data?category=${category}`)
+        .then(res => res.json())
+        .then(data => {
+            if (lineChart) lineChart.destroy();
+            lineChart = new Chart(document.getElementById("monthlyChart"), {
+                type: "line",
+                data: {
+                    labels: Object.keys(data),
+                    datasets: [{
+                        label: "Monthly Spending",
+                        data: Object.values(data),
+                        tension: 0.2
+                    }]
+                }
+            });
+        });
+
+    // INSIGHTS
+    fetch(`/insights?category=${category}`)
+        .then(res => res.json())
+        .then(data => {
+            const list = document.getElementById("insightsList");
+            list.innerHTML = "";
+
+            data.forEach(i => {
+                const li = document.createElement("li");
+                li.textContent = i;
+                list.appendChild(li);
+            });
+        });
+}
+
+// STOCK TRACKER
+function loadStock() {
+    const ticker = document.getElementById("stockInput").value;
+    if (!ticker) return;
+
+    document.getElementById("stockContainer").innerHTML = `
+        <iframe 
+            src="https://widget.finnhub.io/widgets/stocks/chart?symbol=${ticker}&theme=dark"
+            width="100%" 
+            height="400"
+            frameborder="0">
+        </iframe>
+    `;
+}
+
+// EVENTS
+document.getElementById("categoryFilter").addEventListener("change", loadCharts);
+window.onload = loadCharts;
+</script>
+
+</body>
+</html>
