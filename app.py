@@ -9,6 +9,7 @@ from functools import wraps
 import io
 
 load_dotenv()
+
 app = Flask(__name__)
 app.secret_key = os.getenv("SECRET_KEY", "dev_fallback_key")
 
@@ -73,13 +74,13 @@ def index():
     return render_template("index.html", transactions=transactions)
 
 # ------------------------
-# Upload CSV
+# Upload CSV (SAFE VERSION)
 # ------------------------
 
 @app.route("/upload", methods=["POST"])
 @login_required
 def upload():
-    file = request.files["file"]
+    file = request.files.get("file")
 
     if not file:
         return "No file uploaded"
@@ -89,17 +90,48 @@ def upload():
     stream = io.StringIO(file.read().decode("utf-8"))
     reader = csv.DictReader(stream)
 
+    added = 0
+    skipped = 0
+
     for row in reader:
-        if not row["amount"]:
+        try:
+            amount = row.get("amount")
+            category = row.get("category")
+            date = row.get("date")
+            description = row.get("description", "")
+
+            if not amount or not category or not date:
+                skipped += 1
+                continue
+
+            amount = float(amount)
+
+            conn.execute(
+                "INSERT INTO transactions (user_id, amount, category, date, description) VALUES (?, ?, ?, ?, ?)",
+                (
+                    session["user_id"],
+                    amount,
+                    category.strip(),
+                    date,
+                    description.strip()
+                )
+            )
+
+            added += 1
+
+        except ValueError:
+            skipped += 1
             continue
 
-        conn.execute(
-            "INSERT INTO transactions (user_id, amount, category, date, description) VALUES (?, ?, ?, ?, ?)",
-            (session["user_id"], float(row["amount"]), row["category"], row["date"], row["description"])
-        )
+        except Exception as e:
+            print("Row error:", row, e)
+            skipped += 1
+            continue
 
     conn.commit()
     conn.close()
+
+    print(f"Uploaded {added}, skipped {skipped}")
 
     return redirect("/")
 
@@ -133,6 +165,7 @@ def chart_data():
 
     return jsonify(data)
 
+
 @app.route("/monthly-data")
 @login_required
 def monthly_data():
@@ -160,6 +193,7 @@ def monthly_data():
 
     return jsonify(dict(sorted(months.items())))
 
+
 @app.route("/insights")
 @login_required
 def insights():
@@ -167,7 +201,7 @@ def insights():
 
     conn = get_db()
 
-    # Filtered transactions
+    # Filtered
     if category:
         transactions = conn.execute(
             "SELECT * FROM transactions WHERE user_id = ? AND category = ?",
@@ -179,7 +213,7 @@ def insights():
             (session["user_id"],)
         ).fetchall()
 
-    # ALL transactions (for % comparison)
+    # Always get ALL for % calculations
     all_transactions = conn.execute(
         "SELECT * FROM transactions WHERE user_id = ?",
         (session["user_id"],)
@@ -188,6 +222,7 @@ def insights():
     conn.close()
 
     return jsonify(generate_insights(transactions, all_transactions))
+
 
 # ------------------------
 # Add / Reset / Auth
@@ -209,9 +244,11 @@ def add():
     )
     conn.commit()
     conn.close()
+
     return redirect("/")
 
-@app.route("/reset")
+
+@app.route("/reset", methods=["POST"])
 @login_required
 def reset():
     conn = get_db()
@@ -221,7 +258,9 @@ def reset():
     )
     conn.commit()
     conn.close()
+
     return redirect("/")
+
 
 @app.route("/register", methods=["GET", "POST"])
 def register():
@@ -230,15 +269,19 @@ def register():
         try:
             conn.execute(
                 "INSERT INTO users (username, password) VALUES (?, ?)",
-                (request.form["username"], generate_password_hash(request.form["password"]))
+                (
+                    request.form["username"],
+                    generate_password_hash(request.form["password"])
+                )
             )
             conn.commit()
         except:
-            return "User exists"
+            return "User already exists"
 
         return redirect("/login")
 
     return render_template("register.html")
+
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
@@ -256,11 +299,13 @@ def login():
 
     return render_template("login.html")
 
+
 @app.route("/logout")
 @login_required
 def logout():
     session.clear()
     return redirect("/login")
+
 
 # ------------------------
 
