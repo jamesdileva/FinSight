@@ -1,147 +1,171 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <title>FinSight</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<title>FinSight</title>
 
-  <style>
-    body {
-      background: #0f172a;
-      color: #e2e8f0;
-      font-family: Arial;
-      padding: 20px;
-    }
+<style>
+body {
+  background: #0f172a;
+  color: #e2e8f0;
+  font-family: Arial;
+  padding: 20px;
+  margin: 0;
+}
 
-    .card {
-      background: #1e293b;
-      padding: 15px;
-      border-radius: 10px;
-      margin-bottom: 20px;
-    }
+/* HEADER */
+.header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
 
-    input, button, select {
-      padding: 8px;
-      margin: 5px;
-      border-radius: 6px;
-      border: none;
-    }
+/* GRID */
+.dashboard {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 20px;
+}
 
-    input { background: #334155; color: white; }
-    button { background: #3b82f6; color: white; cursor: pointer; }
+/* LEFT SIDE */
+.left-column {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
 
-    /* ✅ HEADER */
-    .header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
+/* RIGHT SIDE */
+.right-column {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
 
-    .top-bar {
-      display: flex;
-      gap: 10px;
-    }
+/* CARDS */
+.card {
+  background: #1e293b;
+  padding: 14px;
+  border-radius: 10px;
+  transition: all 0.2s ease-in-out;
+}
 
-    .top-bar form {
-      margin: 0;
-    }
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 18px rgba(0,0,0,0.4);
+}
 
-    /* Default buttons (blue) */
-    button {
-      background: #f63b79;
-      color: white;
-      cursor: pointer;
-    }
+/* INPUTS */
+input, select {
+  width: 100%;
+  padding: 8px;
+  margin: 5px 0;
+  border-radius: 6px;
+  border: none;
+  background: #334155;
+  color: white;
+}
 
-    /* Logout = RED */
-    .logout-btn {
-      background: #ef4444;
-    }
+/* BUTTONS */
+button {
+  background: #6366f1;
+  color: white;
+  padding: 6px 12px;
+  margin: 4px 4px 4px 0;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+}
 
-  .logout-btn:hover {
-    background: #dc2626;
-  }
+.logout-btn { background: #ef4444; }
+.reset-btn { background: #3b82f6; }
 
-  /* Reset = BLUE (link styled as button) */
-  .reset-btn {
-    background: #3b57f6;
-    color: white;
-    padding: 8px 10px;
-    border-radius: 6px;
-    text-decoration: none;
-  }
+/* QUICK BUTTONS */
+.quick-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
 
-  .reset-btn:hover {
-    background: #2563eb;
-  }
-  </style>
+/* WATCHLIST LIST */
+#stockList {
+  list-style: none;
+  padding: 0;
+}
+
+#stockList li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #334155;
+  padding: 6px 10px;
+  border-radius: 6px;
+  margin-bottom: 6px;
+}
+
+.delete-btn {
+  background: #ef4444;
+  padding: 4px 8px;
+}
+
+/* WATCHLIST CHART GRID (BOTTOM) */
+#multiStockContainer {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 15px;
+  margin-top: 10px;
+}
+
+.stock-card {
+  background: #0f172a;
+  padding: 8px;
+  border-radius: 8px;
+}
+
+/* CHARTS */
+canvas {
+  max-height: 220px;
+}
+</style>
 </head>
 
 <body>
 
-<!-- ✅ HEADER -->
 <div class="header">
   <h1>FinSight</h1>
 
-  <div class="top-bar">
-  <form action="/logout">
-    <button type="submit" class="logout-btn">Logout</button>
-  </form>
+  <div>
+    <form action="/logout">
+      <button class="logout-btn">Logout</button>
+    </form>
 
-<form action="/reset" method="POST">
-  <button class="reset-btn">Reset</button>
-</form>
-</form>
-</form>
-</div>
-
-
+    <form action="/reset" method="POST">
+      <button class="reset-btn">Reset</button>
+    </form>
   </div>
 </div>
 
-<!-- FILTER -->
 <select id="categoryFilter">
   <option value="">All</option>
-  <option value="Food">Food</option>
-  <option value="Rent">Rent</option>
-  <option value="Groceries">Groceries</option>
-  <option value="Transport">Transport</option>
-  <option value="Shopping">Shopping</option>
-  <option value="Entertainment">Entertainment</option>
+  <option>Food</option>
+  <option>Rent</option>
+  <option>Groceries</option>
 </select>
 
-<!-- STOCK TRACKER -->
+<div class="dashboard">
+
+<!-- LEFT -->
+<div class="left-column">
+
 <div class="card">
-  <h2>Stock Tracker</h2>
-
-  <input id="stockInput" placeholder="Enter ticker (AAPL)">
-  <button onclick="loadStock()">Track</button>
-  <div>
-    <h3>Quick Picks
-          <!-- buttons -->
-  <button onclick="quickStock('AAPL')">Apple</button>
-  <button onclick="quickStock('TSLA')">Tesla</button>
-  <button onclick="quickStock('GOOGL')">Google</button>
-  <button onclick="quickStock('AMZN')">Amazon</button>
-  </h3><h3>Browse Stocks
-<!-- dropdown -->
-  <select id="stockDropdown" onchange="selectStock()">
-  <option value="">Select a stock</option>
-  <option value="NVDA">Nvidia</option>
-  <option value="META">Meta (Facebook)</option>
-  <option value="NFLX">Netflix</option>
-  <option value="AMD">AMD</option>
-  <option value="INTC">Intel</option>
-  <option value="DIS">Disney</option>
-  <option value="UBER">Uber</option>
-  <option value="PYPL">PayPal</option>
-    </h3>
-</select>
+<h2>Monthly Trend</h2>
+<canvas id="monthlyChart"></canvas>
 </div>
 
-  <div id="stockContainer"></div>
+<div class="card">
+<h2>Category Breakdown</h2>
+<canvas id="chart"></canvas>
 </div>
 
-<!-- ADD -->
 <div class="card">
 <h2>Add Transaction</h2>
 <form action="/add" method="POST">
@@ -153,7 +177,6 @@
 </form>
 </div>
 
-<!-- UPLOAD -->
 <div class="card">
 <h2>Upload CSV</h2>
 <form action="/upload" method="POST" enctype="multipart/form-data">
@@ -162,121 +185,204 @@
 </form>
 </div>
 
-<!-- INSIGHTS -->
+</div>
+
+<!-- RIGHT -->
+<div class="right-column">
+
+<div class="card">
 <h2>Insights</h2>
 <ul id="insightsList"></ul>
+</div>
 
-<!-- CHARTS -->
-<h2>Monthly Trend</h2>
-<canvas id="monthlyChart"></canvas>
+<div class="card">
+<h2>Stock Tracker</h2>
 
-<h2>Category Breakdown</h2>
-<canvas id="chart"></canvas>
+<input id="stockInput" placeholder="Enter ticker">
+<button onclick="loadStock()">Track</button>
 
-<!-- TRANSACTIONS -->
-<h2>Transactions</h2>
-<ul>
-  {% for t in transactions %}
-    <li>${{ t.amount }} - {{ t.category }} - {{ t.date }}</li>
-  {% endfor %}
-</ul>
+<div class="quick-buttons">
+<button onclick="quickStock('AAPL')">Apple</button>
+<button onclick="quickStock('TSLA')">Tesla</button>
+<button onclick="quickStock('GOOGL')">Google</button>
+<button onclick="quickStock('AMZN')">Amazon</button>
+</div>
+
+<select id="stockDropdown" onchange="selectStock()">
+<option value="">Select stock</option>
+<option value="NVDA">Nvidia</option>
+<option value="META">Meta</option>
+<option value="NFLX">Netflix</option>
+</select>
+
+<div id="stockContainer"></div>
+</div>
+
+<div class="card">
+<h2>Watchlist</h2>
+
+<form action="/add-stock" method="POST">
+<select name="ticker" required>
+  <option value="">Add stock</option>
+  <option value="AAPL">Apple</option>
+  <option value="TSLA">Tesla</option>
+  <option value="GOOGL">Google</option>
+  <option value="AMZN">Amazon</option>
+  <option value="NVDA">Nvidia</option>
+  <option value="META">Meta</option>
+  <option value="NFLX">Netflix</option>
+</select>
+<button>Add</button>
+</form>
+
+<ul id="stockList"></ul>
+</div>
+
+</div>
+</div>
+
+<!-- ✅ WATCHLIST CHARTS AT BOTTOM -->
+<div class="card" style="margin-top:20px;">
+<h2>Watchlist Charts</h2>
+<div id="multiStockContainer"></div>
+</div>
 
 <script>
 let pieChart;
 let lineChart;
 
+/* STOCK */
 function selectStock() {
-    const dropdown = document.getElementById("stockDropdown");
-    const ticker = dropdown.value;
-
-    if (!ticker) return;
-
-    document.getElementById("stockInput").value = ticker;
-    loadStock();
-
-    dropdown.value = ""; // reset back to placeholder
+  const ticker = document.getElementById("stockDropdown").value;
+  if (!ticker) return;
+  document.getElementById("stockInput").value = ticker;
+  loadStock();
 }
 
-function loadCharts() {
-    const category = document.getElementById("categoryFilter").value;
-
-    // PIE
-    fetch(`/chart-data?category=${category}`)
-        .then(res => res.json())
-        .then(data => {
-            if (pieChart) pieChart.destroy();
-            pieChart = new Chart(document.getElementById("chart"), {
-                type: "pie",
-                data: {
-                    labels: Object.keys(data),
-                    datasets: [{ data: Object.values(data) }]
-                }
-            });
-        });
-
-    // LINE
-    fetch(`/monthly-data?category=${category}`)
-        .then(res => res.json())
-        .then(data => {
-            if (lineChart) lineChart.destroy();
-            lineChart = new Chart(document.getElementById("monthlyChart"), {
-                type: "line",
-                data: {
-                    labels: Object.keys(data),
-                    datasets: [{
-                        label: "Monthly Spending",
-                        data: Object.values(data),
-                        tension: 0.2
-                    }]
-                }
-            });
-        });
-
-    // INSIGHTS
-    fetch(`/insights?category=${category}`)
-        .then(res => res.json())
-        .then(data => {
-            const list = document.getElementById("insightsList");
-            list.innerHTML = "";
-
-            data.forEach(i => {
-                const li = document.createElement("li");
-                li.textContent = i;
-                list.appendChild(li);
-            });
-        });
+function quickStock(t) {
+  document.getElementById("stockInput").value = t;
+  loadStock();
 }
 
-function quickStock(ticker) {
-    document.getElementById("stockInput").value = ticker;
-    loadStock();
-}
-
-// STOCK TRACKER
 function loadStock() {
-    let ticker = document.getElementById("stockInput").value.toUpperCase();
-    if (!ticker) return;
+  const t = document.getElementById("stockInput").value;
+  if (!t) return;
 
-    document.getElementById("stockContainer").innerHTML = `
-        <iframe 
-            src="https://widget.finnhub.io/widgets/stocks/chart?symbol=${ticker}&theme=dark"
-            width="100%" 
-            height="400"
-            frameborder="0">
-        </iframe>
-    `;
+  document.getElementById("stockContainer").innerHTML =
+    `<iframe src="https://widget.finnhub.io/widgets/stocks/chart?symbol=${t}&theme=dark"
+     width="100%" height="250"></iframe>`;
 }
 
-// EVENTS
-document.getElementById("categoryFilter").addEventListener("change", loadCharts);
-window.onload = loadCharts;
+/* WATCHLIST */
+function loadWatchlist() {
+  fetch("/get-stocks")
+    .then(res => res.json())
+    .then(data => {
+      const list = document.getElementById("stockList");
+      const container = document.getElementById("multiStockContainer");
+
+      list.innerHTML = "";
+      container.innerHTML = "";
+
+      data.forEach(stock => {
+        // LIST ITEM
+        const li = document.createElement("li");
+        li.innerHTML = `
+          ${stock.ticker}
+          <form method="POST" action="/delete-stock">
+            <input type="hidden" name="id" value="${stock.id}">
+            <button class="delete-btn">✕</button>
+          </form>
+        `;
+        list.appendChild(li);
+
+        // CHART CARD
+        const chart = document.createElement("div");
+        chart.className = "stock-card";
+        chart.innerHTML = `
+          <h4>${stock.ticker}</h4>
+          <iframe src="https://widget.finnhub.io/widgets/stocks/chart?symbol=${stock.ticker}&theme=dark"
+          width="100%" height="180"></iframe>
+        `;
+        container.appendChild(chart);
+      });
+    });
+}
+
+/* CHARTS */
+function loadCharts() {
+
+  // PIE CHART
+  fetch("/chart-data")
+    .then(res => res.json())
+    .then(data => {
+      if (pieChart) pieChart.destroy();
+
+      pieChart = new Chart(document.getElementById("chart"), {
+        type: "pie",
+        data: {
+          labels: Object.keys(data),
+          datasets: [{
+            data: Object.values(data)
+          }]
+        },
+        options: {
+          plugins: {
+            legend: {
+              position: "bottom"
+            }
+          }
+        }
+      });
+    });
+
+  // LINE CHART
+  fetch("/monthly-data")
+    .then(res => res.json())
+    .then(data => {
+      if (lineChart) lineChart.destroy();
+
+      lineChart = new Chart(document.getElementById("monthlyChart"), {
+        type: "line",
+        data: {
+          labels: Object.keys(data),
+          datasets: [{
+            label: "Monthly Spending",
+            data: Object.values(data),
+            tension: 0.3
+          }]
+        }
+      });
+    });
+
+  // ✅ INSIGHTS (no category for now — safe)
+  fetch("/insights")
+    .then(res => res.json())
+    .then(data => {
+      const list = document.getElementById("insightsList");
+
+      if (!list) return; // safety guard
+
+      list.innerHTML = "";
+
+      data.forEach(i => {
+        const li = document.createElement("li");
+        li.textContent = i;
+        list.appendChild(li);
+      });
+    })
+    .catch(err => console.error("Insights error:", err));
+}
+
+/* INIT */
+window.onload = () => {
+  loadCharts();
+  loadWatchlist();
+
+  setInterval(loadCharts, 15000);
+  setInterval(loadWatchlist, 30000);
+};
 </script>
 
 </body>
 </html>
-<script>
-
-function confirmReset() {
-    return confirm("Are you sure you want to delete ALL your data? This cannot be undone.");
-}
-</script>

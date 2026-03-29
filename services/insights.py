@@ -15,8 +15,6 @@ def generate_insights(transactions, all_transactions=None):
 
     if all_transactions:
         total_all = sum(t["amount"] for t in all_transactions)
-
-        # Only show if actually filtered (not 100%)
         if total_all > 0 and total != total_all:
             percent_total = (total / total_all) * 100
             insights.append(f"This is {percent_total:.1f}% of total spending")
@@ -33,49 +31,45 @@ def generate_insights(transactions, all_transactions=None):
 
     single_category = len(categories) == 1
 
-    # ONLY show top category if multiple categories
     if not single_category:
         top = max(categories, key=categories.get)
+        percent = (categories[top] / sum(categories.values())) * 100
+        insights.append(f"Top category: {top} ({percent:.1f}%)")
 
-        if all_transactions:
-            total_all = sum(t["amount"] for t in all_transactions)
-            percent = (categories[top] / total_all) * 100
-            insights.append(f"Top category: {top} ({percent:.1f}% of total)")
-        else:
-            total_cat = sum(categories.values())
-            percent = (categories[top] / total_cat) * 100
-            insights.append(f"Top category: {top} ({percent:.1f}%)")
+        smallest = min(categories, key=categories.get)
+        insights.append(f"Lowest spending category: {smallest}")
 
     # ------------------------
-    # Monthly
+    # Monthly Data
     # ------------------------
     months = monthly_spending(transactions)
-    growth = monthly_growth_rate(months)
+
+    # ✅ Always show highest month
+    if len(months) > 0:
+        highest_month = max(months, key=months.get)
+        insights.append(f"Highest spending month: {highest_month}")
 
     # ------------------------
-    # Growth
+    # Month-to-month change
     # ------------------------
     growth = monthly_growth_rate(months)
+
     if growth is not None:
+        last_month = sorted(months.keys())[-1]
+
         if growth > 0:
-            insights.append(f"Spending increased by {growth:.2f}%")
+            insights.append(f"Last month ({last_month}) increased by {growth:.2f}%")
         else:
-            insights.append(f"Spending decreased by {abs(growth):.2f}%")
+            insights.append(f"Last month ({last_month}) decreased by {abs(growth):.2f}%")
     else:
         insights.append(spending_trend(months))
+
     # ------------------------
-    # Spike
+    # Spike detection
     # ------------------------
     spike = detect_spike(months)
     if spike:
         insights.append(spike)
-
-    # ------------------------
-    # Category comparison
-    # ------------------------
-    if not single_category:
-        smallest = min(categories, key=categories.get)
-        insights.append(f"Lowest spending category: {smallest}")
 
     # ------------------------
     # Single category extras
@@ -83,9 +77,6 @@ def generate_insights(transactions, all_transactions=None):
     if single_category and len(months) > 0:
         avg = total / len(months)
         insights.append(f"Average monthly spending: ${avg:.2f}")
-
-        highest_month = max(months, key=months.get)
-        insights.append(f"Highest spending month: {highest_month}")
 
     return insights
 
@@ -110,8 +101,8 @@ def spending_trend(months):
     avg = sum(months.values()) / len(months)
 
     if months[keys[-1]] > avg:
-        return "Spending is increasing over time"
-    return "Spending is decreasing over time"
+        return "Spending is trending upward"
+    return "Spending is trending downward"
 
 
 def monthly_growth_rate(months):
@@ -120,13 +111,13 @@ def monthly_growth_rate(months):
     if len(keys) < 2:
         return None
 
-    first = months[keys[0]]
     last = months[keys[-1]]
+    prev = months[keys[-2]]
 
-    if first == 0:
+    if prev == 0:
         return None
 
-    return round(((last - first) / first) * 100, 2)
+    return round(((last - prev) / prev) * 100, 2)
 
 
 def detect_spike(months):
@@ -144,6 +135,6 @@ def detect_spike(months):
         if change > 20:
             return f"Spending spiked in {keys[i]} (+{round(change,1)}%)"
         elif change < -20:
-            return f"Spending dropped sharply in {keys[i]} ({round(change,1)}%)"
+            return f"Spending dropped in {keys[i]} ({round(change,1)}%)"
 
     return None

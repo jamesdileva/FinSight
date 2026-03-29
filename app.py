@@ -44,6 +44,14 @@ def init_db():
     """)
 
     conn.execute("""
+    CREATE TABLE IF NOT EXISTS stocks (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER,
+        ticker TEXT
+    )
+    """)
+
+    conn.execute("""
     CREATE TABLE IF NOT EXISTS transactions (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         user_id INTEGER,
@@ -74,7 +82,7 @@ def index():
     return render_template("index.html", transactions=transactions)
 
 # ------------------------
-# Upload CSV (SAFE VERSION)
+# Upload CSV
 # ------------------------
 
 @app.route("/upload", methods=["POST"])
@@ -83,28 +91,22 @@ def upload():
     file = request.files.get("file")
 
     if not file:
-        return "No file uploaded"
+        return redirect("/")
 
     conn = get_db()
 
     stream = io.StringIO(file.read().decode("utf-8"))
     reader = csv.DictReader(stream)
 
-    added = 0
-    skipped = 0
-
     for row in reader:
         try:
-            amount = row.get("amount")
-            category = row.get("category")
+            amount = float(row.get("amount", 0))
+            category = row.get("category", "Other")
             date = row.get("date")
             description = row.get("description", "")
 
-            if not amount or not category or not date:
-                skipped += 1
+            if not date:
                 continue
-
-            amount = float(amount)
 
             conn.execute(
                 "INSERT INTO transactions (user_id, amount, category, date, description) VALUES (?, ?, ?, ?, ?)",
@@ -116,22 +118,11 @@ def upload():
                     description.strip()
                 )
             )
-
-            added += 1
-
-        except ValueError:
-            skipped += 1
-            continue
-
-        except Exception as e:
-            print("Row error:", row, e)
-            skipped += 1
+        except:
             continue
 
     conn.commit()
     conn.close()
-
-    print(f"Uploaded {added}, skipped {skipped}")
 
     return redirect("/")
 
@@ -201,7 +192,6 @@ def insights():
 
     conn = get_db()
 
-    # Filtered
     if category:
         transactions = conn.execute(
             "SELECT * FROM transactions WHERE user_id = ? AND category = ?",
@@ -213,7 +203,6 @@ def insights():
             (session["user_id"],)
         ).fetchall()
 
-    # Always get ALL for % calculations
     all_transactions = conn.execute(
         "SELECT * FROM transactions WHERE user_id = ?",
         (session["user_id"],)
@@ -223,9 +212,8 @@ def insights():
 
     return jsonify(generate_insights(transactions, all_transactions))
 
-
 # ------------------------
-# Add / Reset / Auth
+# Add / Watchlist / Reset
 # ------------------------
 
 @app.route("/add", methods=["POST"])
@@ -247,6 +235,49 @@ def add():
 
     return redirect("/")
 
+@app.route("/add-stock", methods=["POST"])
+@login_required
+def add_stock():
+    ticker = request.form["ticker"].upper()
+
+    conn = get_db()
+    conn.execute(
+        "INSERT INTO stocks (user_id, ticker) VALUES (?, ?)",
+        (session["user_id"], ticker)
+    )
+    conn.commit()
+    conn.close()
+
+    return redirect("/")
+
+@app.route("/get-stocks")
+@login_required
+def get_stocks():
+    conn = get_db()
+
+    stocks = conn.execute(
+        "SELECT * FROM stocks WHERE user_id = ?",
+        (session["user_id"],)
+    ).fetchall()
+
+    conn.close()
+
+    return jsonify([dict(s) for s in stocks])
+
+@app.route("/delete-stock", methods=["POST"])
+@login_required
+def delete_stock():
+    stock_id = request.form["id"]
+
+    conn = get_db()
+    conn.execute(
+        "DELETE FROM stocks WHERE id = ? AND user_id = ?",
+        (stock_id, session["user_id"])
+    )
+    conn.commit()
+    conn.close()
+
+    return redirect("/")
 
 @app.route("/reset", methods=["POST"])
 @login_required
@@ -261,6 +292,9 @@ def reset():
 
     return redirect("/")
 
+# ------------------------
+# AUTH ROUTES (UNCHANGED + SAFE)
+# ------------------------
 
 @app.route("/register", methods=["GET", "POST"])
 def register():
@@ -305,7 +339,6 @@ def login():
 def logout():
     session.clear()
     return redirect("/login")
-
 
 # ------------------------
 
