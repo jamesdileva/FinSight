@@ -7,56 +7,13 @@
 This project focuses not just on functionality, but on **product-level UX, real-time data updates, and dashboard design principles**.
 
 ---
+##  Live Demo
+https://finsight-3ut5.onrender.com
 
-## Features
+## Setup
+pip install -r requirements.txt  
+python app.py
 
-### SaaS UI Dashboard
-
-* Grid-based layout (CSS Grid + Flexbox)
-* Card-based components (modular UI)
-* Dark theme with polished hover effects
-* Reduced scrolling with optimized layout
-
----
-
-### Financial Insights Engine
-
-* Month-to-month comparison (last month vs previous)
-* Trend detection (increase/decrease)
-* Actionable insights instead of generic summaries
-
----
-
-### Spending Analytics
-
-* 📊 Category breakdown (pie chart)
-* 📈 Monthly trend (line chart)
-* Highest spending month detection
-
----
-
-### Stock Watchlist (Advanced Feature)
-
-* Add/remove stocks per user
-* Persistent storage via backend
-* Multi-chart view (grid layout)
-* Embedded live stock charts (Finnhub)
-* Quick-select + dropdown stock picker
-
----
-
-### Real-Time Updates (Polling)
-
-* Auto-refresh every 10 seconds
-* Updates:
-
-  * Charts
-  * Insights
-  * Watchlist
-
-> Uses **polling**, not WebSockets (intentional design tradeoff for simplicity)
-
----
 
 ## Tech Stack
 
@@ -90,6 +47,18 @@ Backend (app.py)
 Insights Engine (insights.py)
         ↓
 Database / Storage
+```
+
+---
+
+##   Project Structure
+
+```
+/project
+  ├── index.html        # Frontend UI
+  ├── app.py            # Backend server
+  ├── insights.py       # Insight logic
+  └── database/storage
 ```
 
 ---
@@ -141,44 +110,6 @@ Database / Storage
 
 ---
 
-## ⚠️ Common Pitfalls (and Fixes)
-
-### Misconception: “This is real-time”
-
-✔ Reality:
-
-> Uses **polling**, not real-time streaming
-
----
-
-### Re-rendering entire UI repeatedly
-
-✔ Fix:
-
-* Conditional rendering (`children.length` check)
-* Prevents flicker and performance issues
-
----
-
-### Too much vertical stacking
-
-✔ Fix:
-
-* Grid layout
-* Side-by-side charts
-* Reduced scrolling
-
----
-
-### Jittery UI animations
-
-✔ Fix:
-
-* Removed border animations
-* Used transform + box-shadow transitions
-
----
-
 ## Tradeoffs & Decisions
 
 | Decision                       | Reason                      |
@@ -189,64 +120,6 @@ Database / Storage
 | Chart.js                       | Fast integration            |
 
 ---
-
-## Interview Talking Points
-
-### “How did you improve UX?”
-
-> Reduced vertical scrolling using CSS Grid and reorganized layout to improve data visibility.
-
----
-
-### “Is this real-time?”
-
-> It uses polling for near real-time updates. WebSockets would be the next step.
-
----
-
-### “How is your app structured?”
-
-> It follows a client-server model with a REST API, separating frontend rendering from backend data processing.
-
----
-
-### “How do insights work?”
-
-> Data is aggregated server-side and converted into actionable insights like monthly comparisons and peak spending periods.
-
----
-
-## Roadmap (Future Improvements)
-
-###  Version 1.1
-
-* Loading states (spinners)
-* Empty state UI
-* Better mobile responsiveness
-
-###  Version 1.2
-
-* WebSocket real-time updates
-* Live stock prices (API integration)
-* User authentication improvements
-
-###  Version 2.0
-
-* AI-generated financial insights
-* Budget recommendations
-* Predictive spending trends
-
----
-
-##   Project Structure
-
-```
-/project
-  ├── index.html        # Frontend UI
-  ├── app.py            # Backend server
-  ├── insights.py       # Insight logic
-  └── database/storage
-```
 
 ---
 
