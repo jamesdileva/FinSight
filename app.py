@@ -32,8 +32,12 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DB_PATH = os.path.join(BASE_DIR, "database.db")
 
 def get_db():
-    conn = sqlite3.connect(DB_PATH, timeout=10)
+    conn = sqlite3.connect(DB_PATH, timeout=10, check_same_thread=False)
     conn.row_factory = sqlite3.Row
+
+    # THIS LINE FIXES LOCKING
+    conn.execute("PRAGMA journal_mode=WAL;")
+
     return conn
 
 def init_db():
@@ -76,7 +80,14 @@ def init_db():
 @app.route("/")
 @login_required
 def index():
-    return render_template("index.html")
+    conn = get_db()
+    transactions = conn.execute(
+        "SELECT * FROM transactions WHERE user_id = ?",
+        (session["user_id"],)
+    ).fetchall()
+    conn.close()
+
+    return render_template("index.html", transactions=transactions)
 
 # ------------------------
 # CSV Upload
@@ -99,17 +110,18 @@ def upload():
     skipped = 0
 
     for row in reader:
+        print("ROW:", row)  #  debugging
         try:
-            amount = row.get("amount")
-            category = row.get("category")
-            date = row.get("date")
-            description = row.get("description", "")
+            amount = row.get("amount") or row.get("Amount")
+            category = row.get("category") or row.get("Category")
+            date = row.get("date") or row.get("Date")
+            description = row.get("description") or row.get("Description", "")
 
             if not amount or not category or not date:
                 skipped += 1
                 continue
 
-            amount = float(amount)
+            amount = float(amount.replace("$", "").replace(",", ""))
 
             conn.execute(
                 "INSERT INTO transactions (user_id, amount, category, date, description) VALUES (?, ?, ?, ?, ?)",
@@ -124,7 +136,8 @@ def upload():
 
             added += 1
 
-        except:
+        except Exception as e:
+            print("UPLOAD ERROR:", e, row)
             skipped += 1
             continue
 
@@ -374,6 +387,8 @@ def login():
             "SELECT * FROM users WHERE username = ?",
             (request.form["username"],)
         ).fetchone()
+
+        conn.close()  # ✅ ADD THIS
 
         if user and check_password_hash(user["password"], request.form["password"]):
             session["user_id"] = user["id"]
