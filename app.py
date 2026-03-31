@@ -110,7 +110,7 @@ def upload():
     skipped = 0
 
     for row in reader:
-        print("ROW:", row)  #  debugging
+        print("ROW:", row)  # 🔥 ADD THIS
         try:
             amount = row.get("amount") or row.get("Amount")
             category = row.get("category") or row.get("Category")

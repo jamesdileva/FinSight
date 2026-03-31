@@ -1,0 +1,39 @@
+amount,category,date,description
+50,Food,2026-01-01,Breakfast burrito
+1200,Rent,2026-01-01,January rent
+75.5,Groceries,2026-01-03,Trader Joe's haul
+15,Food,2026-01-04,Coffee
+300,Entertainment,2026-01-05,Concert tickets
+-20,Refund,2026-01-06,Returned item
+5000,Income,2026-01-07,Paycheck
+200,Shopping,2026-01-08,Clothes
+45,Food,2026-02-01,Lunch
+1300,Rent,2026-02-01,February rent
+80,Groceries,2026-02-02,Costco run
+20,Food,2026-02-03,Snacks
+600,Entertainment,2026-02-05,New TV
+5200,Income,2026-02-07,Paycheck
+100,Shopping,2026-02-08,Amazon spree
+60,Food,2026-03-01,Dinner
+1250,Rent,2026-03-01,March rent
+95,Groceries,2026-03-02,Walmart
+30,Food,2026-03-03,Fast food
+700,Entertainment,2026-03-05,PS5
+5300,Income,2026-03-07,Paycheck
+250,Shopping,2026-03-08,Sneakers
+9999,Other,2026-03-10,Random big expense
+0,Other,2026-03-11,Zero test
+-150,Refund,2026-03-12,Refund processed
+12.34,Food,2026-03-13,Weird decimal
+400,Travel,2026-03-14,Flight ticket
+200,Travel,2026-03-15,Hotel
+150,Travel,2026-03-16,Car rental
+75,Subscriptions,2026-03-17,Streaming services
+20,Subscriptions,2026-03-18,App purchases
+999,Shopping,2026-03-19,Gaming setup
+1,Food,2026-03-20,Gum
+2500,Income,2026-03-21,Side hustle
+
+abc,Food,2026-03-22,Bad amount
+100,,2026-03-22,Missing category
+100,Food,,Missing date
