@@ -7,6 +7,7 @@ database.db
 
 # Environment variables
 .env
+venv/
 
 # OS stuff
 .DS_Store

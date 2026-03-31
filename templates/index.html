@@ -86,7 +86,7 @@ button {
   gap: 6px;
 }
 
-/* WATCHLIST LIST */
+/* WATCHLIST */
 #stockList {
   list-style: none;
   padding: 0;
@@ -95,30 +95,21 @@ button {
 #stockList li {
   display: flex;
   justify-content: space-between;
-  align-items: center;
   background: #334155;
-  padding: 6px 10px;
+  padding: 6px;
   border-radius: 6px;
-  margin-bottom: 6px;
+  margin-bottom: 5px;
 }
 
 .delete-btn {
   background: #ef4444;
-  padding: 4px 8px;
 }
 
-/* WATCHLIST CHART GRID (BOTTOM) */
+/* WATCHLIST GRID */
 #multiStockContainer {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 15px;
-  margin-top: 10px;
-}
-
-.stock-card {
-  background: #0f172a;
-  padding: 8px;
-  border-radius: 8px;
+  gap: 10px;
 }
 
 /* CHARTS */
@@ -144,11 +135,9 @@ canvas {
   </div>
 </div>
 
+<!-- ✅ CATEGORY DROPDOWN (DYNAMIC NOW) -->
 <select id="categoryFilter">
   <option value="">All</option>
-  <option>Food</option>
-  <option>Rent</option>
-  <option>Groceries</option>
 </select>
 
 <div class="dashboard">
@@ -241,7 +230,7 @@ canvas {
 </div>
 </div>
 
-<!-- ✅ WATCHLIST CHARTS AT BOTTOM -->
+<!-- WATCHLIST CHARTS -->
 <div class="card" style="margin-top:20px;">
 <h2>Watchlist Charts</h2>
 <div id="multiStockContainer"></div>
@@ -250,6 +239,23 @@ canvas {
 <script>
 let pieChart;
 let lineChart;
+
+/* ✅ LOAD CATEGORIES (FIX #1) */
+function loadCategories() {
+  fetch("/categories")
+    .then(res => res.json())
+    .then(data => {
+      const dropdown = document.getElementById("categoryFilter");
+      dropdown.innerHTML = '<option value="">All</option>';
+
+      data.forEach(cat => {
+        const option = document.createElement("option");
+        option.value = cat;
+        option.textContent = cat;
+        dropdown.appendChild(option);
+      });
+    });
+}
 
 /* STOCK */
 function selectStock() {
@@ -285,7 +291,6 @@ function loadWatchlist() {
       container.innerHTML = "";
 
       data.forEach(stock => {
-        // LIST ITEM
         const li = document.createElement("li");
         li.innerHTML = `
           ${stock.ticker}
@@ -296,9 +301,7 @@ function loadWatchlist() {
         `;
         list.appendChild(li);
 
-        // CHART CARD
         const chart = document.createElement("div");
-        chart.className = "stock-card";
         chart.innerHTML = `
           <h4>${stock.ticker}</h4>
           <iframe src="https://widget.finnhub.io/widgets/stocks/chart?symbol=${stock.ticker}&theme=dark"
@@ -309,35 +312,68 @@ function loadWatchlist() {
     });
 }
 
-/* CHARTS */
+/* ✅ CHARTS + INSIGHTS FIX */
 function loadCharts() {
+  const category = document.getElementById("categoryFilter").value;
 
-  // PIE CHART
-  fetch("/chart-data")
-    .then(res => res.json())
-    .then(data => {
+  // ---------------- PIE CHART ----------------
+  fetch(`/chart-data?category=${category}`)
+  .then(res => res.json())
+  .then(data => {
+
+    let labels;
+    let values;
+
+    // ✅ IF SINGLE CATEGORY SELECTED
+    if (category) {
+      const selectedValue = Object.values(data)[0] || 0;
+
+      // get ALL data to compare against
+      fetch("/chart-data")
+        .then(res => res.json())
+        .then(allData => {
+          const total = Object.values(allData).reduce((a, b) => a + b, 0);
+          const other = total - selectedValue;
+
+          labels = [category, "Other"];
+          values = [selectedValue, other];
+
+          if (pieChart) pieChart.destroy();
+
+          pieChart = new Chart(document.getElementById("chart"), {
+            type: "pie",
+            data: {
+              labels: labels,
+              datasets: [{ data: values }]
+            },
+            options: {
+              animation: false
+            }
+          });
+        });
+
+    } else {
+      // ✅ NORMAL ALL CATEGORY VIEW
+      labels = Object.keys(data);
+      values = Object.values(data);
+
       if (pieChart) pieChart.destroy();
 
       pieChart = new Chart(document.getElementById("chart"), {
         type: "pie",
         data: {
-          labels: Object.keys(data),
-          datasets: [{
-            data: Object.values(data)
-          }]
+          labels: labels,
+          datasets: [{ data: values }]
         },
         options: {
-          plugins: {
-            legend: {
-              position: "bottom"
-            }
-          }
+          animation: false
         }
       });
-    });
+    }
+  });
 
-  // LINE CHART
-  fetch("/monthly-data")
+  // ---------------- LINE CHART ----------------
+  fetch(`/monthly-data?category=${category}`)
     .then(res => res.json())
     .then(data => {
       if (lineChart) lineChart.destroy();
@@ -351,18 +387,18 @@ function loadCharts() {
             data: Object.values(data),
             tension: 0.3
           }]
+        },
+        options: {
+          animation: false   // ✅ removes flicker effect
         }
       });
     });
 
-  // ✅ INSIGHTS (no category for now — safe)
-  fetch("/insights")
+  // ---------------- INSIGHTS (UNCHANGED) ----------------
+  fetch(`/insights?category=${category}`)
     .then(res => res.json())
     .then(data => {
       const list = document.getElementById("insightsList");
-
-      if (!list) return; // safety guard
-
       list.innerHTML = "";
 
       data.forEach(i => {
@@ -370,18 +406,23 @@ function loadCharts() {
         li.textContent = i;
         list.appendChild(li);
       });
-    })
-    .catch(err => console.error("Insights error:", err));
+    });
 }
 
 /* INIT */
 window.onload = () => {
+  loadCategories();   // ✅ NEW
   loadCharts();
   loadWatchlist();
 
   setInterval(loadCharts, 15000);
   setInterval(loadWatchlist, 30000);
 };
+
+/* ✅ EVENT LISTENER (SAFE POSITION) */
+document.addEventListener("DOMContentLoaded", () => {
+  document.getElementById("categoryFilter").addEventListener("change", loadCharts);
+});
 </script>
 
 </body>

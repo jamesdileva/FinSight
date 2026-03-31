@@ -72,17 +72,10 @@ def init_db():
 @app.route("/")
 @login_required
 def index():
-    conn = get_db()
-    transactions = conn.execute(
-        "SELECT * FROM transactions WHERE user_id = ?",
-        (session["user_id"],)
-    ).fetchall()
-    conn.close()
-
-    return render_template("index.html", transactions=transactions)
+    return render_template("index.html")
 
 # ------------------------
-# Upload CSV
+# CSV Upload
 # ------------------------
 
 @app.route("/upload", methods=["POST"])
@@ -91,22 +84,28 @@ def upload():
     file = request.files.get("file")
 
     if not file:
-        return redirect("/")
+        return "No file uploaded"
 
     conn = get_db()
 
     stream = io.StringIO(file.read().decode("utf-8"))
     reader = csv.DictReader(stream)
 
+    added = 0
+    skipped = 0
+
     for row in reader:
         try:
-            amount = float(row.get("amount", 0))
-            category = row.get("category", "Other")
+            amount = row.get("amount")
+            category = row.get("category")
             date = row.get("date")
             description = row.get("description", "")
 
-            if not date:
+            if not amount or not category or not date:
+                skipped += 1
                 continue
+
+            amount = float(amount)
 
             conn.execute(
                 "INSERT INTO transactions (user_id, amount, category, date, description) VALUES (?, ?, ?, ?, ?)",
@@ -118,13 +117,37 @@ def upload():
                     description.strip()
                 )
             )
+
+            added += 1
+
         except:
+            skipped += 1
             continue
 
     conn.commit()
     conn.close()
 
+    print(f"Uploaded {added}, skipped {skipped}")
+
     return redirect("/")
+
+# ------------------------
+# CATEGORY DROPDOWN (FIX #1)
+# ------------------------
+
+@app.route("/categories")
+@login_required
+def categories():
+    conn = get_db()
+
+    rows = conn.execute(
+        "SELECT DISTINCT category FROM transactions WHERE user_id = ?",
+        (session["user_id"],)
+    ).fetchall()
+
+    conn.close()
+
+    return jsonify([row["category"] for row in rows])
 
 # ------------------------
 # APIs
@@ -213,7 +236,7 @@ def insights():
     return jsonify(generate_insights(transactions, all_transactions))
 
 # ------------------------
-# Add / Watchlist / Reset
+# TRANSACTIONS
 # ------------------------
 
 @app.route("/add", methods=["POST"])
@@ -234,6 +257,23 @@ def add():
     conn.close()
 
     return redirect("/")
+
+@app.route("/reset", methods=["POST"])
+@login_required
+def reset():
+    conn = get_db()
+    conn.execute(
+        "DELETE FROM transactions WHERE user_id = ?",
+        (session["user_id"],)
+    )
+    conn.commit()
+    conn.close()
+
+    return redirect("/")
+
+# ------------------------
+# WATCHLIST
+# ------------------------
 
 @app.route("/add-stock", methods=["POST"])
 @login_required
@@ -279,21 +319,8 @@ def delete_stock():
 
     return redirect("/")
 
-@app.route("/reset", methods=["POST"])
-@login_required
-def reset():
-    conn = get_db()
-    conn.execute(
-        "DELETE FROM transactions WHERE user_id = ?",
-        (session["user_id"],)
-    )
-    conn.commit()
-    conn.close()
-
-    return redirect("/")
-
 # ------------------------
-# AUTH ROUTES (UNCHANGED + SAFE)
+# AUTH
 # ------------------------
 
 @app.route("/register", methods=["GET", "POST"])
@@ -341,7 +368,12 @@ def logout():
     return redirect("/login")
 
 # ------------------------
+# RUN APP (DO NOT REMOVE)
+# ------------------------
+
+import os
 
 if __name__ == "__main__":
     init_db()
-    app.run(debug=True)
+    port = int(os.environ.get("PORT", 10000))
+    app.run(host="0.0.0.0", port=port)
