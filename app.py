@@ -265,13 +265,21 @@ def add():
 @app.route("/reset", methods=["POST"])
 @login_required
 def reset():
+    user_id = session.get("user_id")
+
+    if not user_id:
+        print("No user_id in session")
+        return redirect("/login")
+
     conn = get_db()
     conn.execute(
         "DELETE FROM transactions WHERE user_id = ?",
-        (session["user_id"],)
+        (user_id,)
     )
     conn.commit()
     conn.close()
+
+    print(f"Reset complete for user {user_id}")
 
     return redirect("/")
 
