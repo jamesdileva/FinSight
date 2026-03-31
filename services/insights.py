@@ -1,6 +1,8 @@
 from collections import defaultdict
-
-
+from openai import OpenAI
+# ------------------------
+# MAIN FUNCTION
+# ------------------------
 def generate_insights(transactions, all_transactions=None):
     if not transactions:
         return ["No data yet"]
@@ -8,26 +10,49 @@ def generate_insights(transactions, all_transactions=None):
     insights = []
 
     # ------------------------
-    # Total Spending
+    # SPLIT DATA (FIX)
     # ------------------------
-    total = sum(t["amount"] for t in transactions)
-    insights.append(f"Total spending: ${total:.2f}")
+    expenses = [t for t in transactions if t["amount"] > 0 and t["category"] != "Income"]
+    income = [t for t in transactions if t["category"] == "Income"]
+    refunds = [t for t in transactions if t["amount"] < 0]
 
+    # ------------------------
+    # TOTALS
+    # ------------------------
+    total_spent = sum(t["amount"] for t in expenses)
+    total_income = sum(t["amount"] for t in income)
+    total_refunds = abs(sum(t["amount"] for t in refunds))
+
+    insights.append(f"Total spending: ${total_spent:.2f}")
+
+    if total_income > 0:
+        insights.append(f"Total income: ${total_income:.2f}")
+
+    if total_refunds > 0:
+        insights.append(f"Refunds: -${total_refunds:.2f}")
+
+    # % of total spending (based on expenses only)
     if all_transactions:
-        total_all = sum(t["amount"] for t in all_transactions)
-        if total_all > 0 and total != total_all:
-            percent_total = (total / total_all) * 100
+        all_expenses = [
+            t for t in all_transactions
+            if t["amount"] > 0 and t["category"] != "Income"
+        ]
+        total_all = sum(t["amount"] for t in all_expenses)
+
+        if total_all > 0 and total_spent != total_all:
+            percent_total = (total_spent / total_all) * 100
             insights.append(f"This is {percent_total:.1f}% of total spending")
 
     # ------------------------
-    # Categories
+    # CATEGORIES (EXPENSES ONLY)
     # ------------------------
     categories = defaultdict(float)
-    for t in transactions:
+    for t in expenses:
         categories[t["category"]] += t["amount"]
 
     if not categories:
-        return ["No data for this category"]
+        insights.append("No spending data for this selection")
+        return insights
 
     single_category = len(categories) == 1
 
@@ -40,17 +65,16 @@ def generate_insights(transactions, all_transactions=None):
         insights.append(f"Lowest spending category: {smallest}")
 
     # ------------------------
-    # Monthly Data
+    # MONTHLY (EXPENSES ONLY)
     # ------------------------
-    months = monthly_spending(transactions)
+    months = monthly_spending(expenses)
 
-    # ✅ Always show highest month
     if len(months) > 0:
         highest_month = max(months, key=months.get)
         insights.append(f"Highest spending month: {highest_month}")
 
     # ------------------------
-    # Month-to-month change
+    # GROWTH
     # ------------------------
     growth = monthly_growth_rate(months)
 
@@ -65,24 +89,24 @@ def generate_insights(transactions, all_transactions=None):
         insights.append(spending_trend(months))
 
     # ------------------------
-    # Spike detection
+    # SPIKE
     # ------------------------
     spike = detect_spike(months)
     if spike:
         insights.append(spike)
 
     # ------------------------
-    # Single category extras
+    # SINGLE CATEGORY BONUS
     # ------------------------
     if single_category and len(months) > 0:
-        avg = total / len(months)
+        avg = total_spent / len(months)
         insights.append(f"Average monthly spending: ${avg:.2f}")
 
     return insights
 
 
 # ------------------------
-# Helpers
+# HELPERS (DO NOT REMOVE)
 # ------------------------
 
 def monthly_spending(transactions):
@@ -138,3 +162,33 @@ def detect_spike(months):
             return f"Spending dropped in {keys[i]} ({round(change,1)}%)"
 
     return None
+## OPEN AI INSIGHTS TO COME WITH API
+##client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+
+def generate_ai_insights(total_spent, total_income, categories, months):
+    try:
+        prompt = f"""
+        You are a financial assistant.
+
+        Data:
+        - Total spending: {total_spent}
+        - Total income: {total_income}
+        - Categories: {dict(categories)}
+        - Monthly spending: {dict(months)}
+
+        Give 3 short, helpful financial insights.
+        Keep them simple and human.
+        """
+
+        response = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[{"role": "user", "content": prompt}],
+        )
+
+        text = response.choices[0].message.content
+
+        return text.split("\n")
+
+    except Exception as e:
+        print("AI error:", e)
+        return []

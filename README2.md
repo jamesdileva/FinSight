@@ -1,113 +1,37 @@
-# 💰 FinSight
+## ⚠️ Common Pitfalls (and Fixes)
 
-FinSight is a personal finance dashboard that helps you track spending, visualize trends, and monitor stocks — all in one place.
+### Misconception: “This is real-time”
 
----
+✔ Reality:
 
-## 🚀 Features
-
-* 📊 Category breakdown (pie chart)
-* 📈 Monthly spending trends (line chart)
-* 🧠 Smart insights (auto-generated)
-* 📂 CSV upload for bulk transactions
-* ➕ Manual transaction entry
-* 📉 Stock tracker + watchlist
-* 🔐 User authentication (login/register)
+> Uses **polling**, not real-time streaming
 
 ---
 
-## 🛠️ Tech Stack
+### Re-rendering entire UI repeatedly
 
-* Backend: Flask
-* Database: SQLite
-* Frontend: HTML, CSS, JavaScript
-* Charts: Chart.js
+✔ Fix:
 
----
-
-## ⚙️ Setup (Local Development)
-
-### 1. Clone the repo
-
-```bash
-git clone https://github.com/your-username/finsight.git
-cd finsight
-```
-
-### 2. Create virtual environment (recommended)
-
-```bash
-python -m venv venv
-venv\Scripts\activate   # Windows
-# or
-source venv/bin/activate  # Mac/Linux
-```
-
-### 3. Install dependencies
-
-```bash
-pip install flask python-dotenv werkzeug
-```
-
-### 4. Run the app
-
-```bash
-python app.py
-```
-
-### 5. Open in browser
-
-```
-http://127.0.0.1:5000
-```
+* Conditional rendering (`children.length` check)
+* Prevents flicker and performance issues
 
 ---
 
-## 📂 CSV Upload Format
+### Too much vertical stacking
 
-Your CSV file must include:
+✔ Fix:
 
-```csv
-amount,category,date,description
-50,Food,2026-03-01,Lunch
-1200,Rent,2026-03-01,Apartment
-```
+* Grid layout
+* Side-by-side charts
+* Reduced scrolling
 
 ---
 
-## 🔐 Environment Variables (Optional)
+### Jittery UI animations
 
-Create a `.env` file:
+✔ Fix:
 
-```
-SECRET_KEY=your_secret_key_here
-```
-
----
-
-## 🌐 Deployment
-
-This app is designed to be deployed using platforms like Render.
+* Removed border animations
+* Used transform + box-shadow transitions
 
 ---
-
-## ⚠️ Notes
-
-* SQLite is used for local development
-* Data may reset on some hosting platforms
-* Future upgrade: PostgreSQL support
-
----
-
-## 📌 Future Improvements
-
-* Budget tracking
-* Recurring expenses
-* Better stock analytics
-* Mobile responsiveness
-
----
-
-## 👨‍💻 Author
-
-Built by James 🚀
