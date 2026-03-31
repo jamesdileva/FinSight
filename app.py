@@ -32,7 +32,7 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DB_PATH = os.path.join(BASE_DIR, "database.db")
 
 def get_db():
-    conn = sqlite3.connect(DB_PATH)
+    conn = sqlite3.connect(DB_PATH, timeout=10)
     conn.row_factory = sqlite3.Row
     return conn
 
@@ -262,26 +262,36 @@ def add():
 
     return redirect("/")
 
+import time
+
 @app.route("/reset", methods=["POST"])
 @login_required
 def reset():
     user_id = session.get("user_id")
 
-    if not user_id:
-        print("No user_id in session")
-        return redirect("/login")
+    for attempt in range(3):
+        try:
+            conn = get_db()
 
-    conn = get_db()
-    conn.execute(
-        "DELETE FROM transactions WHERE user_id = ?",
-        (user_id,)
-    )
-    conn.commit()
-    conn.close()
+            conn.execute(
+                "DELETE FROM transactions WHERE user_id = ?",
+                (user_id,)
+            )
 
-    print(f"Reset complete for user {user_id}")
+            conn.commit()
+            conn.close()
 
-    return redirect("/")
+            print("Reset successful")
+            return redirect("/")
+
+        except sqlite3.OperationalError as e:
+            if "locked" in str(e):
+                print(f"DB locked, retrying... ({attempt})")
+                time.sleep(1)
+            else:
+                raise e
+
+    return "Database busy, try again"
 
 # ------------------------
 # WATCHLIST

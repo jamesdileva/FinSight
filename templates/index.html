@@ -129,7 +129,7 @@ canvas {
       <button class="logout-btn">Logout</button>
     </form>
 
-    <form action="/reset" method="POST">
+    <form action="/reset" method="POST" onsubmit="pauseRefresh()">
       <button type="submit" class="reset-btn">Reset</button>
     </form>
   </div>
