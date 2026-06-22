@@ -1,154 +1,217 @@
-#  FinSight — Personal Finance Dashboard (SaaS-Style)
+# FinSight
 
-## Overview
+A local-first personal finance dashboard built with Flask, SQLite, Chart.js, Electron, and Ollama.
 
-**FinSight** is a full-stack personal finance dashboard designed to replicate the look and feel of a modern SaaS product. It allows users to track expenses, visualize spending patterns, generate insights, and monitor stock performance — all within a clean, responsive UI.
-
-This project focuses not just on functionality, but on **product-level UX, real-time data updates, and dashboard design principles**.
+FinSight helps users track spending, analyze financial trends, monitor budgets, detect recurring expenses, and generate AI-powered financial summaries while keeping data stored locally on their machine.
 
 ---
-##  Live Demo
-https://finsight-3ut5.onrender.com
 
-## Setup
-pip install -r requirements.txt  
-python app.py
+## Features
 
+### Financial Dashboard
 
-## Tech Stack
+* Monthly spending trend chart
+* Category spending breakdown
+* Financial insights engine
+* AI-generated financial summaries
 
-### Frontend
+### Transaction Management
 
-* HTML + CSS (custom styling)
-* JavaScript (vanilla)
-* Chart.js (data visualization)
+* CSV transaction imports
+* Manual transaction entry
+* Edit existing transactions
+* Delete transactions
+* Search and filter transactions
+
+### Budget Tracking
+
+* Create category budgets
+* Visual budget progress indicators
+* Overspending alerts
+* Budget monitoring by category
+
+### Recurring Expense Detection
+
+Automatically identifies recurring expenses such as:
+
+* Subscriptions
+* Rent
+* Utilities
+* Memberships
+
+### Stock Watchlist
+
+* Add stock tickers
+* Remove tickers
+* Persistent watchlist
+* Dashboard ribbon display
+
+### Local AI Analysis
+
+Optional AI summaries powered by Ollama.
+
+Supported local models include:
+
+* Llama 3
+* Gemma
+* Other Ollama-compatible models
+
+---
+
+## Technology Stack
 
 ### Backend
 
-* Python (Flask)
-* REST API endpoints
+* Python
+* Flask
+* SQLite
 
-### Data
+### Frontend
 
-* JSON responses
-* CSV upload support
+* HTML
+* CSS
+* JavaScript
+* Chart.js
+
+### Desktop Application
+
+* Electron
+
+### AI
+
+* Ollama
+* Local LLMs
 
 ---
 
-## Architecture
+## Screenshots
 
+Add screenshots here.
+
+Example:
+
+* Dashboard
+* Budget Tracking
+* Transaction Management
+* AI Summary
+* Stock Watchlist
+
+---
+
+## Installation
+
+### Clone Repository
+
+```bash
+git clone https://github.com/YOUR_USERNAME/FinSight.git
+cd FinSight
 ```
-Frontend (index.html)
-        ↓
-   Fetch API (REST)
-        ↓
-Backend (app.py)
-        ↓
-Insights Engine (insights.py)
-        ↓
-Database / Storage
+
+### Install Python Dependencies
+
+```bash
+pip install -r requirements.txt
+```
+
+### Run Application
+
+```bash
+python app.py
+```
+
+Open:
+
+http://127.0.0.1:5000
+
+---
+
+## Optional AI Setup
+
+Install Ollama:
+
+https://ollama.com
+
+Download a model:
+
+```bash
+ollama pull llama3.1:8b
+```
+
+Run:
+
+```bash
+ollama serve
+```
+
+AI summaries will automatically become available.
+
+---
+
+## Electron Desktop Version
+
+Install dependencies:
+
+```bash
+npm install
+```
+
+Run Electron:
+
+```bash
+npm start
 ```
 
 ---
 
-##   Project Structure
+## Project Structure
 
+```text
+FinSight/
+│
+├── app.py
+├── finance.db
+├── requirements.txt
+│
+├── services/
+│   └── insights.py
+│
+├── templates/
+│   └── index.html
+│
+├── static/
+│
+├── electron/
+│
+└── README.md
 ```
-/project
-  ├── index.html        # Frontend UI
-  ├── app.py            # Backend server
-  ├── insights.py       # Insight logic
-  └── database/storage
-```
 
 ---
 
-## Data Flow
+## Future Roadmap
 
-* Client requests data via:
+Potential future enhancements:
 
-  * `/chart-data`
-  * `/monthly-data`
-  * `/insights`
-  * `/get-stocks`
-
-* Backend processes:
-
-  * Transaction aggregation
-  * Insight generation
-  * Stock persistence
-
-* Frontend dynamically updates:
-
-  * Charts (Chart.js)
-  * Insights (DOM rendering)
-  * Watchlist (dynamic components)
+* PDF report exports
+* Net worth tracking
+* Investment portfolio analytics
+* Multi-user support
+* Budget forecasting
+* Financial goal planning
+* Custom dashboard widgets
+* Enhanced stock analytics
+* Cloud synchronization
+* Automated transaction categorization
 
 ---
 
-## Key Concepts Used
+## License
 
-### UI / UX
-
-* CSS Grid (layout system)
-* Flexbox (alignment)
-* Card-based UI
-* Dashboard ergonomics
-
-### Data & Systems
-
-* REST APIs
-* JSON data handling
-* Polling (simulated real-time)
-* Client-server architecture
-
-### Visualization
-
-* Time-series analysis
-* Category aggregation
-* Interactive charts
+MIT License
 
 ---
 
-## Tradeoffs & Decisions
+## Author
 
-| Decision                       | Reason                      |
-| ------------------------------ | --------------------------- |
-| Polling instead of WebSockets  | Simpler implementation      |
-| Embedded stock charts (iframe) | Avoid building chart engine |
-| Vanilla JS                     | No framework overhead       |
-| Chart.js                       | Fast integration            |
+James DiLeva
 
----
-
----
-
-##  Final Summary
-
-FinSight is a **full-stack SaaS-style financial dashboard** that demonstrates:
-
-* Real-world UI/UX design
-* Data-driven insights
-* API-based architecture
-* Live updating systems
-
----
-
-##  What Makes This Stand Out
-
-* Not just CRUD — **actual product thinking**
-* Focus on **usability and visibility**
-* Includes **real-time-like behavior**
-* Combines **finance + stocks + analytics**
-
----
-
-## Author Notes
-
-This project was built with a focus on:
-
-* Practical engineering decisions
-* Clean, readable UI
-* Interview readiness
-
----
+Built as a portfolio and learning project focused on local-first financial analytics and desktop application development.

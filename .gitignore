@@ -13,6 +13,20 @@ venv/
 .DS_Store
 Thumbs.db
 
+# PyInstaller
+*.spec
+
 # IDE
 .vscode/
 .idea/
+node_modules
+
+build/
+dist/
+__pycache__/
+*.pyc
+finance.db
+
+# Electron
+electron/dist/
+electron/node_modules/

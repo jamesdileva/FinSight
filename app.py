@@ -1,28 +1,13 @@
-from flask import Flask, render_template, request, redirect, jsonify, session
+from flask import Flask, render_template, request, redirect, jsonify
 import sqlite3
 from services.insights import generate_insights
 import csv
-from werkzeug.security import generate_password_hash, check_password_hash
 import os
-from dotenv import load_dotenv
-from functools import wraps
 import io
-
-load_dotenv()
-
+import requests
+import yfinance as yf
+from collections import defaultdict
 app = Flask(__name__)
-app.secret_key = os.getenv("SECRET_KEY", "dev_fallback_key")
-
-# ------------------------
-# Auth
-# ------------------------
-def login_required(f):
-    @wraps(f)
-    def wrapper(*args, **kwargs):
-        if "user_id" not in session:
-            return redirect("/login")
-        return f(*args, **kwargs)
-    return wrapper
 
 # ------------------------
 # DB
@@ -44,17 +29,8 @@ def init_db():
     conn = get_db()
 
     conn.execute("""
-    CREATE TABLE IF NOT EXISTS users (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        username TEXT UNIQUE,
-        password TEXT
-    )
-    """)
-
-    conn.execute("""
     CREATE TABLE IF NOT EXISTS stocks (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        user_id INTEGER,
         ticker TEXT
     )
     """)
@@ -62,11 +38,18 @@ def init_db():
     conn.execute("""
     CREATE TABLE IF NOT EXISTS transactions (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        user_id INTEGER,
         amount REAL,
         category TEXT,
         date TEXT,
         description TEXT
+    )
+    """)
+
+    conn.execute("""
+    CREATE TABLE IF NOT EXISTS budgets (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        category TEXT,
+        monthly_limit REAL
     )
     """)
 
@@ -78,12 +61,11 @@ def init_db():
 # ------------------------
 
 @app.route("/")
-@login_required
+
 def index():
     conn = get_db()
     transactions = conn.execute(
-        "SELECT * FROM transactions WHERE user_id = ?",
-        (session["user_id"],)
+        "SELECT * FROM transactions"
     ).fetchall()
     conn.close()
 
@@ -94,7 +76,7 @@ def index():
 # ------------------------
 
 @app.route("/upload", methods=["POST"])
-@login_required
+
 def upload():
     file = request.files.get("file")
 
@@ -124,9 +106,8 @@ def upload():
             amount = float(amount.replace("$", "").replace(",", ""))
 
             conn.execute(
-                "INSERT INTO transactions (user_id, amount, category, date, description) VALUES (?, ?, ?, ?, ?)",
+                "INSERT INTO transactions (amount, category, date, description) VALUES (?, ?, ?, ?)",
                 (
-                    session["user_id"],
                     amount,
                     category.strip(),
                     date,
@@ -149,17 +130,16 @@ def upload():
     return redirect("/")
 
 # ------------------------
-# CATEGORY DROPDOWN (FIX #1)
+# CATEGORY DROPDOWN 
 # ------------------------
 
 @app.route("/categories")
-@login_required
+
 def categories():
     conn = get_db()
 
     rows = conn.execute(
-        "SELECT DISTINCT category FROM transactions WHERE user_id = ?",
-        (session["user_id"],)
+        "SELECT DISTINCT category FROM transactions"
     ).fetchall()
 
     conn.close()
@@ -171,7 +151,7 @@ def categories():
 # ------------------------
 
 @app.route("/chart-data")
-@login_required
+
 def chart_data():
     category = request.args.get("category")
 
@@ -179,26 +159,26 @@ def chart_data():
 
     if category:
         transactions = conn.execute(
-            "SELECT * FROM transactions WHERE user_id = ? AND category = ?",
-            (session["user_id"], category)
+            "SELECT * FROM transactions WHERE category = ?",
+            (category,)
         ).fetchall()
     else:
         transactions = conn.execute(
-            "SELECT * FROM transactions WHERE user_id = ?",
-            (session["user_id"],)
+            "SELECT * FROM transactions"
+
         ).fetchall()
 
     conn.close()
 
     data = {}
     for t in transactions:
-        data[t["category"]] = data.get(t["category"], 0) + t["amount"]
+        data[t["category"]] = data.get(t["category"], 0) + float(t["amount"] or 0)
 
     return jsonify(data)
 
 
 @app.route("/monthly-data")
-@login_required
+
 def monthly_data():
     category = request.args.get("category")
 
@@ -206,13 +186,12 @@ def monthly_data():
 
     if category:
         transactions = conn.execute(
-            "SELECT * FROM transactions WHERE user_id = ? AND category = ?",
-            (session["user_id"], category)
+            "SELECT * FROM transactions WHERE category = ?",
+            (category,)
         ).fetchall()
     else:
         transactions = conn.execute(
-            "SELECT * FROM transactions WHERE user_id = ?",
-            (session["user_id"],)
+            "SELECT * FROM transactions"
         ).fetchall()
 
     conn.close()
@@ -220,13 +199,12 @@ def monthly_data():
     months = {}
     for t in transactions:
         key = t["date"][:7]
-        months[key] = months.get(key, 0) + t["amount"]
+        months[key] = months.get(key, 0) + float(t["amount"] or 0)
 
     return jsonify(dict(sorted(months.items())))
 
 
 @app.route("/insights")
-@login_required
 def insights():
     category = request.args.get("category")
 
@@ -234,36 +212,191 @@ def insights():
 
     if category:
         transactions = conn.execute(
-            "SELECT * FROM transactions WHERE user_id = ? AND category = ?",
-            (session["user_id"], category)
+            "SELECT * FROM transactions WHERE category = ?",
+            (category,)
         ).fetchall()
     else:
         transactions = conn.execute(
-            "SELECT * FROM transactions WHERE user_id = ?",
-            (session["user_id"],)
+            "SELECT * FROM transactions"
         ).fetchall()
 
     all_transactions = conn.execute(
-        "SELECT * FROM transactions WHERE user_id = ?",
-        (session["user_id"],)
+        "SELECT * FROM transactions"
+    ).fetchall()
+
+    budgets = conn.execute(
+    "SELECT * FROM budgets"
     ).fetchall()
 
     conn.close()
 
-    return jsonify(generate_insights(transactions, all_transactions))
+    return jsonify(
+        generate_insights(
+            transactions,
+            all_transactions,
+            budgets
+        )
+    )
+
+@app.route("/budget-status")
+def budget_status():
+    
+    conn = get_db()
+
+    budgets = conn.execute(
+        "SELECT * FROM budgets"
+    ).fetchall()
+    transactions = conn.execute(
+        "SELECT * FROM transactions"
+    ).fetchall()
+    conn.close()
+    current_month = max(
+        t["date"][:7]
+        for t in transactions
+    )
+
+    category_totals = defaultdict(float)
+
+    for t in transactions:
+        if t["date"].startswith(current_month):
+            if float(float(t["amount"] or 0)) > 0:
+                category_totals[
+                    t["category"].strip().lower()
+                ] += float(float(t["amount"] or 0))
+
+    results = []
+
+    for budget in budgets:
+        category = budget["category"]
+        limit = float(
+            budget["monthly_limit"]
+        )
+        spent = category_totals.get(
+            category.strip().lower(),
+            0
+        )
+        percent = 0
+        if limit > 0:
+            percent = round(
+                (spent / limit) * 100,
+                1
+            )
+        results.append({
+            "id": budget["id"],
+            "category": category,
+            "spent": spent,
+            "limit": limit,
+            "percent": percent
+        })
+
+    return jsonify(results)
+
+@app.route("/delete-budget", methods=["POST"])
+def delete_budget():
+
+    budget_id = request.form["id"]
+
+    conn = get_db()
+
+    conn.execute(
+        "DELETE FROM budgets WHERE id = ?",
+        (budget_id,)
+    )
+
+    conn.commit()
+    conn.close()
+
+    return jsonify({"success": True})
+
+    
+@app.route("/ai-summary")
+def ai_summary():
+    conn = get_db()
+
+    transactions = conn.execute(
+        "SELECT * FROM transactions"
+    ).fetchall()
+
+    conn.close()
+
+    if not transactions:
+        return jsonify({
+            "summary": "No transaction data available yet."
+        })
+
+    insights = generate_insights(transactions)
+
+    # ------------------------
+    # Build Financial Summary
+    # ------------------------
+
+    category_totals = {}
+
+    for t in transactions:
+        category_totals[t["category"]] = (
+            category_totals.get(t["category"], 0)
+            + float(t["amount"] or 0)
+        )
+
+    summary_text = "\n".join(insights)
+
+    category_text = "\n".join([
+        f"{k}: ${v:.2f}"
+        for k, v in category_totals.items()
+    ])
+
+    prompt = f"""
+You are a financial assistant.
+
+Analyze this user's spending activity and provide a short helpful summary.
+
+Financial Insights:
+{summary_text}
+
+Category Totals:
+{category_text}
+
+Rules:
+- Keep response concise
+- Use bullet points
+- Focus on trends and observations
+- Do not invent fake data
+- Be practical and helpful
+"""
+    print("Sending prompt to Ollama...")
+    try:
+        response = requests.post(
+            "http://localhost:11434/api/generate",
+            json={
+                "model": "mistral",
+                "prompt": prompt,
+                "stream": False
+            },
+            timeout=180
+        )
+
+        data = response.json()
+        print("Received AI response")
+
+        return jsonify({
+            "summary": data["response"]
+        })
+
+    except Exception as e:
+        return jsonify({
+            "summary": f"AI error: {str(e)}"
+        })
 
 # ------------------------
 # TRANSACTIONS
 # ------------------------
 
 @app.route("/add", methods=["POST"])
-@login_required
 def add():
     conn = get_db()
     conn.execute(
-        "INSERT INTO transactions (user_id, amount, category, date, description) VALUES (?, ?, ?, ?, ?)",
+        "INSERT INTO transactions (amount, category, date, description) VALUES (?, ?, ?, ?)",
         (
-            session["user_id"],
             request.form["amount"],
             request.form["category"],
             request.form["date"],
@@ -273,22 +406,21 @@ def add():
     conn.commit()
     conn.close()
 
-    return redirect("/")
+    return jsonify({"success": True})
 
 import time
 
 @app.route("/reset", methods=["POST"])
-@login_required
+
 def reset():
-    user_id = session.get("user_id")
+   
 
     for attempt in range(3):
         try:
             conn = get_db()
 
             conn.execute(
-                "DELETE FROM transactions WHERE user_id = ?",
-                (user_id,)
+                "DELETE FROM transactions",
             )
 
             conn.commit()
@@ -311,98 +443,223 @@ def reset():
 # ------------------------
 
 @app.route("/add-stock", methods=["POST"])
-@login_required
+
 def add_stock():
     ticker = request.form["ticker"].upper()
 
     conn = get_db()
     conn.execute(
-        "INSERT INTO stocks (user_id, ticker) VALUES (?, ?)",
-        (session["user_id"], ticker)
+        "INSERT INTO stocks (ticker) VALUES (?)",
+        (ticker,)
     )
     conn.commit()
     conn.close()
 
-    return redirect("/")
+    return jsonify({"success": True})
 
 @app.route("/get-stocks")
-@login_required
 def get_stocks():
+
     conn = get_db()
 
     stocks = conn.execute(
-        "SELECT * FROM stocks WHERE user_id = ?",
-        (session["user_id"],)
+        "SELECT * FROM stocks"
     ).fetchall()
 
     conn.close()
 
-    return jsonify([dict(s) for s in stocks])
+    results = []
+
+    for stock in stocks:
+
+        ticker = stock["ticker"]
+
+        try:
+
+            data = yf.Ticker(ticker)
+
+            info = data.fast_info
+
+            price = info.get("lastPrice", 0)
+
+            previous = info.get("previousClose", price)
+
+            change = 0
+
+            if previous:
+                change = (
+                    (price - previous)
+                    / previous
+                ) * 100
+
+            results.append({
+
+                "id": stock["id"],
+
+                "ticker": ticker,
+
+                "price": round(price, 2),
+
+                "change": round(change, 2)
+
+            })
+
+        except Exception as e:
+
+            print("Stock error:", ticker, e)
+
+            results.append({
+
+                "id": stock["id"],
+
+                "ticker": ticker,
+
+                "price": "N/A",
+
+                "change": 0
+
+            })
+
+    return jsonify(results)
 
 @app.route("/delete-stock", methods=["POST"])
-@login_required
 def delete_stock():
     stock_id = request.form["id"]
 
     conn = get_db()
     conn.execute(
-        "DELETE FROM stocks WHERE id = ? AND user_id = ?",
-        (stock_id, session["user_id"])
+        "DELETE FROM stocks WHERE id = ?",
+        (stock_id,)
     )
     conn.commit()
     conn.close()
 
     return redirect("/")
 
+    
+
 # ------------------------
-# AUTH
+# Transaction Table
 # ------------------------
+@app.route("/transactions")
+def transactions():
+    conn = get_db()
 
-@app.route("/register", methods=["GET", "POST"])
-def register():
-    if request.method == "POST":
-        conn = get_db()
-        try:
-            conn.execute(
-                "INSERT INTO users (username, password) VALUES (?, ?)",
-                (
-                    request.form["username"],
-                    generate_password_hash(request.form["password"])
-                )
-            )
-            conn.commit()
-        except:
-            return "User already exists"
+    rows = conn.execute("""
+        SELECT *
+        FROM transactions
+        ORDER BY date DESC
+    """).fetchall()
 
-        return redirect("/login")
+    conn.close()
 
-    return render_template("register.html")
+    return jsonify([dict(r) for r in rows])
 
+@app.route("/delete-transaction", methods=["POST"])
+def delete_transaction():
+    transaction_id = request.form["id"]
 
-@app.route("/login", methods=["GET", "POST"])
-def login():
-    if request.method == "POST":
-        conn = get_db()
-        user = conn.execute(
-            "SELECT * FROM users WHERE username = ?",
-            (request.form["username"],)
-        ).fetchone()
+    conn = get_db()
 
-        conn.close()  # ✅ ADD THIS
+    conn.execute(
+        "DELETE FROM transactions WHERE id = ?",
+        (transaction_id,)
+    )
 
-        if user and check_password_hash(user["password"], request.form["password"]):
-            session["user_id"] = user["id"]
-            return redirect("/")
-        return "Invalid login"
+    conn.commit()
+    conn.close()
 
-    return render_template("login.html")
+    return jsonify({"success": True})
 
+@app.route("/update-transaction", methods=["POST"])
+def update_transaction():
+    transaction_id = request.form["id"]
 
-@app.route("/logout")
-@login_required
-def logout():
-    session.clear()
-    return redirect("/login")
+    amount = request.form["amount"]
+    category = request.form["category"]
+    description = request.form["description"]
+    date = request.form["date"]
+
+    conn = get_db()
+
+    conn.execute("""
+        UPDATE transactions
+        SET amount = ?,
+            category = ?,
+            description = ?,
+            date = ?
+        WHERE id = ?
+    """, (
+        amount,
+        category,
+        description,
+        date,
+        transaction_id
+    ))
+
+    conn.commit()
+    conn.close()
+
+    return jsonify({"success": True})
+
+@app.route("/add-budget", methods=["POST"])
+def add_budget():
+
+    category = request.form.get(
+        "category",
+        ""
+    ).strip()
+
+    limit = request.form.get(
+        "limit",
+        ""
+    ).strip()
+
+    if not category or not limit:
+        return jsonify({
+            "error": "Missing category or limit"
+        }), 400
+
+    try:
+        limit = float(limit)
+    except ValueError:
+        return jsonify({
+            "error": "Invalid limit"
+        }), 400
+
+    conn = get_db()
+
+    conn.execute(
+        """
+        INSERT INTO budgets
+        (category, monthly_limit)
+        VALUES (?, ?)
+        """,
+        (
+            category,
+            limit
+        )
+    )
+
+    conn.commit()
+    conn.close()
+
+    return jsonify({
+        "success": True
+    })
+
+@app.route("/get-budgets")
+def get_budgets():
+
+    conn = get_db()
+
+    budgets = conn.execute(
+        "SELECT * FROM budgets"
+    ).fetchall()
+
+    conn.close()
+
+    return jsonify([dict(b) for b in budgets])
 
 # ------------------------
 # RUN APP (DO NOT REMOVE)

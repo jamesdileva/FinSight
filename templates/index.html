@@ -20,40 +20,49 @@ body {
   margin-bottom: 20px;
 }
 
-/* GRID */
-.dashboard {
-  display: grid;
-  grid-template-columns: 2fr 1fr;
-  gap: 20px;
-}
 
-/* LEFT SIDE */
-.left-column {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 20px;
-}
 
-/* RIGHT SIDE */
-.right-column {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-}
+
+
 
 /* CARDS */
 .card {
-  background: #1e293b;
-  padding: 14px;
-  border-radius: 10px;
-  transition: all 0.2s ease-in-out;
+
+    background: #111827;
+
+    border-radius: 12px;
+
+    padding: 20px;
+
+    overflow-y: auto;
+
 }
 
 .card:hover {
   transform: translateY(-2px);
   box-shadow: 0 8px 18px rgba(0,0,0,0.4);
+  overflow-y: auto;
+}
+.insights{
+    background: #111827;
+
+    border-radius: 12px;
+
+    padding: 20px;
+
+    overflow-y: auto;
+
 }
 
+.insights-card,
+.ai-card,
+.transactions-card {
+
+    max-height: 700px;
+
+    overflow-y: auto;
+
+}
 /* INPUTS */
 input, select {
   width: 100%;
@@ -76,7 +85,6 @@ button {
   cursor: pointer;
 }
 
-.logout-btn { background: #ef4444; }
 .reset-btn { background: #3b82f6; }
 
 /* QUICK BUTTONS */
@@ -90,6 +98,12 @@ button {
 #stockList {
   list-style: none;
   padding: 0;
+}
+
+#stockInput {
+
+    width: 100px;
+
 }
 
 #stockList li {
@@ -111,11 +125,361 @@ button {
   grid-template-columns: 1fr 1fr;
   gap: 10px;
 }
+/* AI BOX  */
+.ai-box {
+    background: #0f172a;
+    border: 1px solid #1e293b;
+    border-radius: 12px;
+    padding: 18px;
+
+    max-height: 300px;
+
+    overflow-y: auto;
+
+    box-shadow:
+        0 0 12px rgba(0,0,0,0.25);
+}
+
+.transactions-wrapper {
+
+    max-height: 500px;
+
+    overflow-y: auto;
+
+}
+
+
+
+
+#aiSummaryText {
+    white-space: pre-wrap;
+    line-height: 1.5;
+    margin-bottom: 12px;
+    color: #d1d5db;
+}
 
 /* CHARTS */
 canvas {
   max-height: 220px;
+  width: 100% !important;
 }
+
+#transactionsTable {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+}
+
+#transactionsTable th,
+#transactionsTable td {
+    padding: 10px;
+    border-bottom: 1px solid #374151;
+    text-align: left;
+}
+
+#transactionsTable tr:hover {
+    background: #1f2937;
+}
+
+.delete-btn {
+    background: #ef4444;
+    border: none;
+    padding: 6px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    color: white;
+}
+
+.edit-btn {
+    background: #6366f1;
+    border: none;
+    padding: 6px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    color: white;
+    margin-right: 5px;
+}
+.table-container {
+    max-height: 450px;
+    overflow-y: auto;
+    margin-top: 10px;
+    border-radius: 10px;
+}
+
+.add-row input {
+    background: #111827;
+    border: 1px solid #374151;
+    padding: 6px;
+    border-radius: 6px;
+    width: 100%;
+    color: white;
+}
+
+#transactionsTable input {
+    background: #111827;
+    border: 1px solid #374151;
+    color: white;
+    padding: 6px;
+    border-radius: 6px;
+    width: 100%;
+}
+
+#transactionsTable thead {
+    position: sticky;
+    top: 0;
+    background: #111827;
+    z-index: 10;
+}
+
+
+.hero-chart {
+    width: 100%;
+
+}
+
+.hero-chart canvas {
+
+    height: 320px !important;
+
+}
+
+.budget-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 5px;
+    font-size: 12px;
+}
+
+
+.budget-fill {
+    height: 100%;
+    border-radius: 999px;
+
+}
+
+.safe {
+    background: #10b981;
+
+}
+
+.warning {
+    background: #f59e0b;
+
+}
+
+.danger {
+    background: #ef4444;
+
+}
+
+
+.category-control,
+.ticker-add,
+.csv-form {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+}
+.budget-ribbon {
+
+    margin-bottom: 20px;
+
+}
+#budgetContainer,
+#stocksContainer {
+
+    display: flex;
+
+    gap: 8px;
+
+    flex-wrap: wrap;
+
+}
+
+.watchlist-bar,
+.budget-bar {
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 10px;
+
+    padding: 8px 12px;
+
+    background: #111827;
+
+    border-radius: 10px;
+
+    margin-bottom: 10px;
+
+    overflow-x: auto;
+
+}
+
+.watchlist-controls,
+.budget-controls {
+
+    display: flex;
+
+    gap: 6px;
+
+    align-items: center;
+
+}
+
+.watchlist-controls input,
+.budget-controls input {
+
+    width: 90px;
+
+    padding: 4px 8px;
+
+    font-size: 12px;
+
+}
+
+.watchlist-controls button,
+.budget-controls button {
+
+    padding: 4px 8px;
+
+    font-size: 12px;
+
+}
+.container {
+    max-width: 1500px;
+    margin: auto;
+    padding: 20px;
+}
+
+
+.top-controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: end;
+    gap: 20px;
+    margin-bottom: 25px;
+    flex-wrap: wrap;
+}
+
+.csv-upload {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+
+
+
+.stock-card,
+.budget-item {
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 6px;
+
+    padding: 4px 8px;
+
+    border-radius: 999px;
+
+    background: #0f172a;
+
+    border: 1px solid #1f2937;
+
+    font-size: 11px;
+
+    white-space: nowrap;
+
+}
+
+.stock-card button {
+    padding: 2px 6px;
+    font-size: 11px;
+}
+
+.stock-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;            /* Tighter text tracking */
+}
+.chart-row {
+
+    display: grid;
+
+    grid-template-columns: 1fr 2fr;
+
+    gap: 20px;
+
+    margin-bottom: 20px;
+
+}
+.bottom-grid {
+
+    display: grid;
+
+    grid-template-columns: 0.9fr 1.8fr 1fr;
+
+    gap: 20px;
+
+    align-items: start;
+
+}
+.stock-ticker {
+
+    font-weight: bold;
+
+}
+
+.stock-price {
+
+    color: #10b981;
+
+    font-weight: bold;
+
+}
+
+#insightsList {
+
+    max-height: 300px;
+
+    overflow-y: auto;
+
+    padding-right: 8px;
+
+}
+
+.stock-green {
+
+    color: #10b981;
+
+    font-weight: bold;
+
+}
+
+.stock-red {
+
+    color: #ef4444;
+
+    font-weight: bold;
+
+}
+
+#categoryFilter {
+
+    width: 220px;
+
+}
+
+#chart {
+
+    max-height: 300px;
+
+}
+
 </style>
 </head>
 
@@ -125,9 +489,7 @@ canvas {
   <h1>FinSight</h1>
 
   <div>
-    <form action="/logout">
-      <button class="logout-btn">Logout</button>
-    </form>
+
 
     <form action="/reset" method="POST" onsubmit="pauseRefresh()">
       <button type="submit" class="reset-btn">Reset</button>
@@ -135,106 +497,203 @@ canvas {
   </div>
 </div>
 
-<!-- ✅ CATEGORY DROPDOWN (DYNAMIC NOW) -->
-<select id="categoryFilter">
-  <option value="">All</option>
-</select>
+<div class="watchlist-bar">
 
-<div class="dashboard">
+    <div class="watchlist-controls">
 
-<!-- LEFT -->
-<div class="left-column">
+        <input
+            type="text"
+            id="stockInput"
+            placeholder="Ticker"
+        >
 
-<div class="card">
-<h2>Monthly Trend</h2>
-<canvas id="monthlyChart"></canvas>
-</div>
+        <button onclick="addStock()">
+            +
+        </button>
 
-<div class="card">
-<h2>Category Breakdown</h2>
-<canvas id="chart"></canvas>
-</div>
+    </div>
 
-<div class="card">
-<h2>Add Transaction</h2>
-<form action="/add" method="POST">
-  <input name="amount" placeholder="Amount" required>
-  <input name="category" placeholder="Category" required>
-  <input name="date" type="date" required>
-  <input name="description" placeholder="Description">
-  <button>Add</button>
-</form>
-</div>
-
-<div class="card">
-<h2>Upload CSV</h2>
-<form action="/upload" method="POST" enctype="multipart/form-data">
-  <input type="file" name="file" required>
-  <button>Upload</button>
-</form>
-</div>
+    <div id="stocksContainer"></div>
 
 </div>
 
-<!-- RIGHT -->
-<div class="right-column">
+<div class="budget-bar">
 
-<div class="card">
-<h2>Insights</h2>
-<ul id="insightsList"></ul>
-</div>
+    <div class="budget-controls">
 
-<div class="card">
-<h2>Stock Tracker</h2>
+        <input
+            type="text"
+            id="budgetCategory"
+            placeholder="Category"
+        >
 
-<input id="stockInput" placeholder="Enter ticker">
-<button onclick="loadStock()">Track</button>
+        <input
+            type="number"
+            id="budgetLimit"
+            placeholder="$"
+        >
 
-<div class="quick-buttons">
-<button onclick="quickStock('AAPL')">Apple</button>
-<button onclick="quickStock('TSLA')">Tesla</button>
-<button onclick="quickStock('GOOGL')">Google</button>
-<button onclick="quickStock('AMZN')">Amazon</button>
-</div>
+        <button onclick="addBudget()">
+            +
+        </button>
 
-<select id="stockDropdown" onchange="selectStock()">
-<option value="">Select stock</option>
-<option value="NVDA">Nvidia</option>
-<option value="META">Meta</option>
-<option value="NFLX">Netflix</option>
-</select>
+    </div>
 
-<div id="stockContainer"></div>
-</div>
-
-<div class="card">
-<h2>Watchlist</h2>
-
-<form action="/add-stock" method="POST">
-<select name="ticker" required>
-  <option value="">Add stock</option>
-  <option value="AAPL">Apple</option>
-  <option value="TSLA">Tesla</option>
-  <option value="GOOGL">Google</option>
-  <option value="AMZN">Amazon</option>
-  <option value="NVDA">Nvidia</option>
-  <option value="META">Meta</option>
-  <option value="NFLX">Netflix</option>
-</select>
-<button>Add</button>
-</form>
-
-<ul id="stockList"></ul>
-</div>
+    <div id="budgetContainer"></div>
 
 </div>
+
+<div class="top-controls">
+
+    <div class="category-control">
+
+        <label>Category</label>
+
+        <select id="categoryFilter">
+            <option value="">All Categories</option>
+        </select>
+
+    </div>
+
+    <form
+        class="csv-form"
+        action="/upload"
+        method="POST"
+        enctype="multipart/form-data"
+    >
+
+        <label>Import CSV</label>
+
+        <input type="file" name="file">
+
+        <button>Upload</button>
+
+    </form>
+
 </div>
 
-<!-- WATCHLIST CHARTS -->
-<div class="card" style="margin-top:20px;">
-<h2>Watchlist Charts</h2>
-<div id="multiStockContainer"></div>
+<!-- CHART ROW -->
+<div class="chart-row">
+
+    <div class="card pie-card">
+
+        <h2>Category Breakdown</h2>
+
+        <canvas id="chart"></canvas>
+
+    </div>
+
+    <div class="card hero-chart">
+
+        <h2>Monthly Trend</h2>
+
+        <canvas id="monthlyChart"></canvas>
+
+    </div>
+
 </div>
+
+<!-- LOWER GRID -->
+<div class="bottom-grid">
+
+    <!-- INSIGHTS -->
+    <div class="card insights-card">
+
+        <h2>Insights</h2>
+
+        <ul id="insightsList"></ul>
+
+    </div>
+
+    <!-- TRANSACTIONS -->
+    <div class="card transactions-card">
+
+        <h2>Transactions</h2>
+
+        <input
+            type="text"
+            id="transactionSearch"
+            placeholder="Search transactions..."
+            onkeyup="filterTransactions()"
+        >
+
+        <div class="table-container">
+
+            <table id="transactionsTable">
+
+                <thead>
+
+                    <tr>
+
+                        <th>Date</th>
+                        <th>Category</th>
+                        <th>Description</th>
+                        <th>Amount</th>
+                        <th>Actions</th>
+
+                    </tr>
+
+                    <tr class="add-row">
+
+                        <td>
+                            <input type="date" id="newDate">
+                        </td>
+
+                        <td>
+                            <input type="text" id="newCategory">
+                        </td>
+
+                        <td>
+                            <input type="text" id="newDescription">
+                        </td>
+
+                        <td>
+                            <input type="number" id="newAmount" step="0.01">
+                        </td>
+
+                        <td>
+
+                            <button onclick="addTransaction()">
+                                Add
+                            </button>
+
+                        </td>
+
+                    </tr>
+
+                </thead>
+
+                <tbody id="transactionsBody"></tbody>
+
+            </table>
+
+        </div>
+
+    </div>
+
+    <!-- AI -->
+    <div class="card ai-card">
+
+        <h2>AI Financial Summary</h2>
+
+        <div id="aiSummaryBox" class="ai-box">
+
+            <p id="aiSummaryText">
+                Loading AI summary...
+            </p>
+
+            <button onclick="loadAISummary()">
+                Refresh AI Analysis
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+
 
 <script>
 let pieChart;
@@ -270,14 +729,6 @@ function quickStock(t) {
   loadStock();
 }
 
-function loadStock() {
-  const t = document.getElementById("stockInput").value;
-  if (!t) return;
-
-  document.getElementById("stockContainer").innerHTML =
-    `<iframe src="https://widget.finnhub.io/widgets/stocks/chart?symbol=${t}&theme=dark"
-     width="100%" height="250"></iframe>`;
-}
 
 /* WATCHLIST */
 function loadWatchlist() {
@@ -312,7 +763,23 @@ function loadWatchlist() {
     });
 }
 
-/* ✅ CHARTS + INSIGHTS FIX */
+function loadAISummary() {
+    const summaryEl = document.getElementById("aiSummaryText");
+
+    summaryEl.innerText = "Generating AI summary...";
+
+    fetch("/ai-summary")
+        .then(res => res.json())
+        .then(data => {
+            summaryEl.innerText = data.summary;
+        })
+        .catch(err => {
+            console.error(err);
+            summaryEl.innerText = "AI summary failed to load.";
+        });
+}
+
+/*  CHARTS + INSIGHTS */
 function loadCharts() {
   const category = document.getElementById("categoryFilter").value;
 
@@ -409,19 +876,452 @@ function loadCharts() {
     });
 }
 
+function loadTransactions() {
+    fetch("/transactions")
+        .then(res => res.json())
+        .then(data => {
+            const body = document.getElementById("transactionsBody");
+
+            body.innerHTML = "";
+
+            data.forEach(t => {
+                const row = document.createElement("tr");
+
+                row.innerHTML = `
+                    <td>
+                        <input value="${t.date}" id="date-${t.id}">
+                    </td>
+
+                    <td>
+                        <input value="${t.category}" id="category-${t.id}">
+                    </td>
+
+                    <td>
+                        <input value="${t.description}" id="description-${t.id}">
+                    </td>
+
+                    <td>
+                        <input value="${t.amount}" id="amount-${t.id}">
+                    </td>
+
+                    <td>
+                        <button
+                            class="edit-btn"
+                            onclick="editTransaction(${t.id})"
+                        >
+                            Save
+                        </button>
+
+                        <button
+                            class="delete-btn"
+                            onclick="deleteTransaction(${t.id})"
+                        >
+                            Delete
+                        </button>
+                    </td>
+                `;
+
+                body.appendChild(row);
+            });
+        });
+}
+
+function deleteTransaction(id) {
+    fetch("/delete-transaction", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/x-www-form-urlencoded"
+        },
+        body: `id=${id}`
+    })
+    .then(() => {
+        loadTransactions();
+        loadCharts();
+        loadAISummary();
+    });
+}
+
+function filterTransactions() {
+    const search =
+        document.getElementById("transactionSearch")
+        .value
+        .toLowerCase();
+
+    const rows =
+        document.querySelectorAll("#transactionsBody tr");
+
+    rows.forEach(row => {
+        const text = Array.from(
+            row.querySelectorAll("input")
+        )
+        .map(input => input.value.toLowerCase())
+        .join(" ");
+
+        row.style.display =
+            text.includes(search)
+            ? ""
+            : "none";
+    });
+}
+
+function editTransaction(id) {
+    const data = new URLSearchParams();
+
+    data.append("id", id);
+    data.append(
+        "date",
+        document.getElementById(`date-${id}`).value
+    );
+
+    data.append(
+        "category",
+        document.getElementById(`category-${id}`).value
+    );
+
+    data.append(
+        "description",
+        document.getElementById(`description-${id}`).value
+    );
+
+    data.append(
+        "amount",
+        document.getElementById(`amount-${id}`).value
+    );
+
+    fetch("/update-transaction", {
+        method: "POST",
+        body: data
+    })
+    .then(() => {
+        loadCharts();
+        loadAISummary();
+    });
+}
+
 /* INIT */
 window.onload = () => {
   loadCategories();   // ✅ NEW
   loadCharts();
   loadWatchlist();
+  loadAISummary();
+  loadBudgets();
 
   setInterval(loadCharts, 15000);
   setInterval(loadWatchlist, 30000);
 };
 
+function addTransaction() {
+    const data = new URLSearchParams();
+
+    data.append(
+        "date",
+        document.getElementById("newDate").value
+    );
+
+    data.append(
+        "category",
+        document.getElementById("newCategory").value
+    );
+
+    data.append(
+        "description",
+        document.getElementById("newDescription").value
+    );
+
+    data.append(
+        "amount",
+        document.getElementById("newAmount").value
+    );
+
+    if (
+        !document.getElementById("newAmount").value
+    ) {
+        return;
+    }
+    if (
+        !document.getElementById("newCategory").value
+    ) {
+        return;
+    }
+
+    fetch("/add", {
+        method: "POST",
+        body: data
+    })
+    .then(() => {
+        loadTransactions();
+        loadCharts();
+        loadAISummary();
+
+        document.getElementById("newDate").value = "";
+        document.getElementById("newCategory").value = "";
+        document.getElementById("newDescription").value = "";
+        document.getElementById("newAmount").value = "";
+    });
+}
+
+
+function addStock(ticker) {
+
+    const data = new URLSearchParams();
+
+    data.append("ticker", ticker);
+
+    fetch("/add-stock", {
+        method: "POST",
+        body: data
+    })
+    .then(response => response.json())
+    .then(() => {
+
+        loadStocks();
+
+    });
+
+}
+
+function addStockFromDropdown() {
+
+    const ticker =
+        document.getElementById("stockSelect").value;
+
+    if (!ticker) return;
+
+    addStock(ticker);
+
+    document.getElementById("stockSelect").value = "";
+
+}
+
+function addCustomStock() {
+
+    const ticker =
+        document.getElementById("customTicker")
+        .value
+        .trim()
+        .toUpperCase();
+
+    if (!ticker) return;
+
+    addStock(ticker);
+
+    document.getElementById("customTicker").value = "";
+
+}
+
+function deleteBudget(id) {
+
+    const data = new URLSearchParams();
+
+    data.append("id", id);
+
+    fetch("/delete-budget", {
+        method: "POST",
+        body: data
+    })
+    .then(() => {
+
+        loadBudgets();
+
+        loadInsights();
+
+    });
+
+}
+
+async function loadBudgets() {
+
+    const res = await fetch("/budget-status");
+    const budgets = await res.json();
+    const container =
+        document.getElementById(
+            "budgetContainer"
+        );
+
+    container.innerHTML = "";
+    budgets.forEach(b => {
+        container.innerHTML += `
+        <div class="budget-item">
+            <div class="budget-header">
+
+                <span>${b.category}</span>
+
+
+
+            </div>
+                <span>
+                    $${b.spent} / $${b.limit}
+                </span>
+
+                <span class="
+                    ${b.percent >= 100
+                        ? "stock-red"
+                        : b.percent >= 80
+                        ? "warning"
+                        : "stock-green"}
+                ">
+                    ${Math.round(b.percent)}%
+                </span>
+
+                                <button
+                    class="delete-btn"
+                    onclick="deleteBudget(${b.id})"
+                >
+                    ✕
+                </button>
+
+            </div>
+        </div>
+        `;
+    });
+}
+
+async function loadStocks() {
+
+    const response = await fetch("/get-stocks");
+
+    const stocks = await response.json();
+
+    const container =
+        document.getElementById("stocksContainer");
+
+    container.innerHTML = "";
+
+    stocks.forEach(stock => {
+
+        container.innerHTML += `
+                <div class="stock-card">
+
+                    <div class="stock-info">
+
+                        <div class="stock-ticker">
+                            ${stock.ticker}
+                        </div>
+
+                        <div class="stock-price">
+                            $${stock.price}
+                        </div>
+
+                        <div class="
+                            ${stock.change >= 0
+                                ? "stock-green"
+                                : "stock-red"}
+                        ">
+                            ${stock.change}%
+                        </div>
+
+                    </div>
+
+                    <button onclick="deleteStock(${stock.id})">
+                        Remove
+                    </button>
+
+                </div>
+            `;
+
+    });
+
+}
+
+async function addStock() {
+
+    const input =
+        document.getElementById("stockInput");
+
+    const ticker = input.value.trim();
+
+    if (!ticker) return;
+
+    await fetch("/add-stock", {
+
+        method: "POST",
+
+        headers: {
+            "Content-Type":
+                "application/x-www-form-urlencoded"
+        },
+
+        body:
+            `ticker=${encodeURIComponent(ticker)}`
+
+    });
+
+    input.value = "";
+
+    loadStocks();
+
+}
+
+async function deleteStock(id) {
+
+    await fetch("/delete-stock", {
+
+        method: "POST",
+
+        headers: {
+            "Content-Type":
+                "application/x-www-form-urlencoded"
+        },
+
+        body: `id=${id}`
+
+    });
+
+    loadStocks();
+
+}
+
+async function deleteBudget(id) {
+
+    await fetch("/delete-budget", {
+
+        method: "POST",
+
+        headers: {
+            "Content-Type":
+                "application/x-www-form-urlencoded"
+        },
+
+        body: `id=${id}`
+
+    });
+
+    loadBudgets();
+
+    loadCharts();
+
+}
+async function addBudget() {
+
+    const category =
+        document.getElementById("budgetCategory").value;
+
+    const limit =
+        document.getElementById("budgetLimit").value;
+
+    const data = new URLSearchParams();
+
+    data.append("category", category);
+    data.append("limit", limit);
+
+    await fetch("/add-budget", {
+
+        method: "POST",
+
+        body: data
+
+    });
+
+    loadBudgets();
+
+}
+
+
 /* ✅ EVENT LISTENER (SAFE POSITION) */
 document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("categoryFilter").addEventListener("change", loadCharts);
+  loadTransactions();
+  loadStocks();
 });
 </script>
 

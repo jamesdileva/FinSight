@@ -3,7 +3,11 @@ from openai import OpenAI
 # ------------------------
 # MAIN FUNCTION
 # ------------------------
-def generate_insights(transactions, all_transactions=None):
+def generate_insights(
+    transactions,
+    all_transactions=None,
+    budgets=None
+):
     if not transactions:
         return ["No data yet"]
 
@@ -12,16 +16,28 @@ def generate_insights(transactions, all_transactions=None):
     # ------------------------
     # SPLIT DATA (FIX)
     # ------------------------
-    expenses = [t for t in transactions if t["amount"] > 0 and t["category"] != "Income"]
-    income = [t for t in transactions if t["category"] == "Income"]
-    refunds = [t for t in transactions if t["amount"] < 0]
+    expenses = [
+        t for t in transactions
+        if float(float(t["amount"] or 0) or 0) > 0
+        and t["category"] != "Income"
+    ]
+
+    income = [
+        t for t in transactions
+        if t["category"] == "Income"
+    ]
+
+    refunds = [
+        t for t in transactions
+        if float(float(t["amount"] or 0) or 0) < 0
+    ]
 
     # ------------------------
     # TOTALS
     # ------------------------
-    total_spent = sum(t["amount"] for t in expenses)
-    total_income = sum(t["amount"] for t in income)
-    total_refunds = abs(sum(t["amount"] for t in refunds))
+    total_spent = sum(float(t["amount"] or 0) for t in expenses)
+    total_income = sum(float(t["amount"] or 0) for t in income)
+    total_refunds = abs(sum(float(t["amount"] or 0) for t in refunds))
 
     insights.append(f"Total spending: ${total_spent:.2f}")
 
@@ -35,9 +51,9 @@ def generate_insights(transactions, all_transactions=None):
     if all_transactions:
         all_expenses = [
             t for t in all_transactions
-            if t["amount"] > 0 and t["category"] != "Income"
+            if float(t["amount"] or 0) > 0 and t["category"] != "Income"
         ]
-        total_all = sum(t["amount"] for t in all_expenses)
+        total_all = sum(float(t["amount"] or 0) for t in all_expenses)
 
         if total_all > 0 and total_spent != total_all:
             percent_total = (total_spent / total_all) * 100
@@ -48,7 +64,7 @@ def generate_insights(transactions, all_transactions=None):
     # ------------------------
     categories = defaultdict(float)
     for t in expenses:
-        categories[t["category"]] += t["amount"]
+        categories[t["category"]] += float(t["amount"] or 0)
 
     if not categories:
         insights.append("No spending data for this selection")
@@ -101,7 +117,15 @@ def generate_insights(transactions, all_transactions=None):
     if single_category and len(months) > 0:
         avg = total_spent / len(months)
         insights.append(f"Average monthly spending: ${avg:.2f}")
+    
+    recurring = detect_recurring(expenses)
 
+    insights.extend(recurring)
+    budget_insights = analyze_budgets(transactions, budgets)
+
+    insights.extend(budget_insights)
+
+    
     return insights
 
 
@@ -112,7 +136,7 @@ def generate_insights(transactions, all_transactions=None):
 def monthly_spending(transactions):
     months = defaultdict(float)
     for t in transactions:
-        months[t["date"][:7]] += t["amount"]
+        months[t["date"][:7]] += float(t["amount"] or 0)
     return months
 
 
@@ -164,6 +188,96 @@ def detect_spike(months):
     return None
 ## OPEN AI INSIGHTS TO COME WITH API
 ##client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+
+def detect_recurring(transactions):
+
+    recurring = []
+
+    grouped = defaultdict(list)
+    
+    for t in transactions:
+
+        key = (
+            t["description"].strip().lower(),
+            round(abs(float(float(t["amount"] or 0))), 2)
+        )
+
+        grouped[key].append(t)
+
+    for (description, amount), items in grouped.items():
+
+        if len(items) >= 3 and description:
+
+            recurring.append(
+                f"Recurring expense detected: "
+                f"{description.title()} "
+                f"(${amount:.2f}) "
+                f"{len(items)} times"
+            )
+
+    return recurring
+
+def analyze_budgets(transactions, budgets):
+
+    insights = []
+
+    if not budgets:
+        return insights
+
+   
+    current_month = max(
+        t["date"][:7]
+        for t in transactions
+    )
+
+    if not current_month:
+        return insights
+
+    # Calculate spending by category
+    category_totals = defaultdict(float)
+
+    for t in transactions:
+
+        if t["date"].startswith(current_month):
+
+            amount = float(float(t["amount"] or 0))
+
+            # Ignore income/refunds
+            if amount <= 0:
+                continue
+
+            normalized = t["category"].strip().lower()
+
+            category_totals[normalized] += amount
+
+    # Compare against budgets
+    for budget in budgets:
+
+        category = budget["category"]
+        limit = float(budget["monthly_limit"])
+
+        spent = category_totals.get(category.strip().lower(), 0)
+
+        if limit <= 0:
+            continue
+
+        percent = (spent / limit) * 100
+
+        if percent >= 100:
+
+            insights.append(
+                f"{category} exceeded budget by "
+                f"${spent - limit:.2f}"
+            )
+
+        elif percent >= 80:
+
+            insights.append(
+                f"{category} budget at "
+                f"{percent:.0f}%"
+            )
+
+    return insights    
 
 def generate_ai_insights(total_spent, total_income, categories, months):
     try:

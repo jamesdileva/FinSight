@@ -1,0 +1,28 @@
+{
+  "dependencies": {
+    "electron": "^42.2.0"
+  },
+  "name": "finsight",
+  "version": "1.0.0",
+  "description": "**FinSight** is a full-stack personal finance dashboard designed to replicate the look and feel of a modern SaaS product. It allows users to track expenses, visualize spending patterns, generate insights, and monitor stock performance — all within a clean, responsive UI.",
+  "main": "index.js",
+  "devDependencies": {
+    "electron-builder": "^26.8.1"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "electron ."
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jamesdileva/FinSight.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/jamesdileva/FinSight/issues"
+  },
+  "homepage": "https://github.com/jamesdileva/FinSight#readme"
+}

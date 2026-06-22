@@ -1,0 +1,16 @@
+amount,category,date,description
+15.99,Entertainment,2026-01-05,Netflix
+15.99,Entertainment,2026-02-05,Netflix
+15.99,Entertainment,2026-03-05,Netflix
+9.99,Entertainment,2026-01-07,Spotify
+9.99,Entertainment,2026-02-07,Spotify
+9.99,Entertainment,2026-03-07,Spotify
+1200,Housing,2026-01-01,Rent
+1200,Housing,2026-02-01,Rent
+1200,Housing,2026-03-01,Rent
+65,Utilities,2026-01-12,Internet
+65,Utilities,2026-02-12,Internet
+65,Utilities,2026-03-12,Internet
+45,Shopping,2026-03-10,Amazon
+22,Food,2026-03-14,Chipotle
+1500,Income,2026-03-01,Paycheck
